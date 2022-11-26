@@ -184,7 +184,7 @@ brooklyn_2020 <- func.df.ToDate(brooklyn_2020,list('date'),format="%m/%d/%y")
 
 #merge the dataframes
 brooklyn_2016_2020_list <- list(brooklyn_2016, brooklyn_2017, brooklyn_2018, brooklyn_2019, brooklyn_2020)
-brooklyn_2016_2020_final <- brooklyn_2016_2020_list %>% reduce(full_join)
+brooklyn_2016_2020 <- brooklyn_2016_2020_list %>% reduce(full_join)
 remove(brooklyn_2016_2020_list)
 
 
@@ -195,3 +195,25 @@ remove(brooklyn_2016_2020_list)
 #or condos.  Restrict the data to purchases where the building class at the time of sale starts with ‘A’ or ‘R’ and where 
 #the number of total units and the number of residential units are both 1.  Additionally restrict the data to observations 
 #where gross square footage is more than 0 and sale price is non-missing.  The resulting dataset should have roughly 19,000 rows. 
+
+
+#filter observations considering purchases of single-family residences and single-unit apartments or condos
+#Restrict the data to purchases where the building class at the time of sale starts with ‘A’ or ‘R’
+brooklyn_2016_2020_final <- brooklyn_2016_2020 %>% filter(str_detect(bldclasssale, "^A") | str_detect(bldclasssale, "^R"))
+
+#the number of total units and the number of residential units are both 1
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(resunits == 1 & totunits == 1)
+
+#Additionally restrict the data to observation where gross square footage is more than 0
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(grosssqft > 0 & !is.na(grosssqft))
+
+#Additionally restrict the data to observation where sale price is non-missing
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(!is.na(price))
+
+
+
+#*******************************Step 2: EDA and feature engineering *******************************#
+#Your goal will be to use linear regression to explain Brooklyn housing prices within the 2016-2020 window.  
+#You will be asked to make predictions for the sale prices within the dataset.  You are encouraged to think of ways 
+#to get the most explanatory power out of your current variables. 
+
