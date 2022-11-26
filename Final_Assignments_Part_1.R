@@ -5,6 +5,11 @@
 # last_revision_date: "12/09/2022"
 # ---
 
+install.packages("dplyr")
+install.packages("tidyverse")
+library(dplyr)
+library(tidyverse)
+
 setwd('C:\\Prinu\\Personal\\Studies\\Masters\\UChicago\\After Admission\\Courses\\Statistical Analysis\\Assignments\\Final Assignment - Part1\\data')
 
 #*******************************Step 1: Import and prepare the data for analysis*******************************#
@@ -23,7 +28,7 @@ brooklyn_2018 <- read.csv('2018_brooklyn.csv')
 brooklyn_2019 <- read.csv('2019_brooklyn.csv')
 brooklyn_2020 <- read.csv('2020_brooklyn.csv')
 
-#removing first 4 rows from csv files
+#removing first 'n' rows from csv files as those are description entries
 brooklyn_2016 <- tail(brooklyn_2016, -4)
 brooklyn_2017 <- tail(brooklyn_2017, -4)
 brooklyn_2018 <- tail(brooklyn_2018, -4)
@@ -68,64 +73,125 @@ brooklyn_2020 <- brooklyn_2020[!apply(brooklyn_2020 == "", 1, all),]
 #since we removed blank rows from brooklyn 2019 & 2020, we reduced from 119351 rows to 117151
 total_observations <- nrow(brooklyn_2016) + nrow(brooklyn_2017) + nrow(brooklyn_2018) + nrow(brooklyn_2019) + nrow(brooklyn_2020)
 
-
-#trim leading and trailing white spaces for columns
-df.trim <- function(df, colname) {
-  #df[colname] <- trimws(df[colname])
-  #df[colname] <- trimws(`$`(df , colname))
-  df[[colname]] <- trimws(df[[colname]])
+#define functions
+func.df.trim <- function(df, colnames) {
+  for (colname in colnames) {
+    df[[colname]] <- trimws(df[[colname]])
+  }
+  
+  return(df)
+}
+func.df.replace <- function(df, colnames, oldvalue, newvalue) {
+  for (colname in colnames) {
+    df[[colname]][df[[colname]] == oldvalue] <- newvalue
+  }
+  
+  return(df)
+}
+func.df.ToInt <- function(df, colnames) {
+  for (colname in colnames) {
+    df[[colname]] <- as.integer(df[[colname]])
+  }
+  
+  return(df)
+}
+func.df.ToNum <- function(df, colnames) {
+  for (colname in colnames) {
+    df[[colname]] <- as.numeric(gsub(",", "", format(df[[colname]], scientific = F)))
+  }
+  
+  return(df)
+}
+func.df.ToDate <- function(df, colnames, format) {
+  for (colname in colnames) {
+    date_formatted <- as.POSIXct(df[[colname]], format=format)
+    df[[colname]] <- as.Date(date_formatted, format=format)
+  }
+  
+  return(df)
 }
 
-df.trim(brooklyn_2016, "address")
+#trim leading and trailing white spaces for columns
+brooklyn_2016 <- func.df.trim(brooklyn_2016, 
+                         list('borough','neighborhood','bldclasscat','block','easement','lot','bldclasscurr','address',
+                              'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+                              'bldclasssale','price','date'))
+brooklyn_2017 <- func.df.trim(brooklyn_2017, 
+                              list('borough','neighborhood','bldclasscat','block','easement','lot','bldclasscurr','address',
+                                   'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+                                   'bldclasssale','price','date'))
+brooklyn_2018 <- func.df.trim(brooklyn_2018, 
+                              list('borough','neighborhood','bldclasscat','block','easement','lot','bldclasscurr','address',
+                                   'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+                                   'bldclasssale','price','date'))
+brooklyn_2019 <- func.df.trim(brooklyn_2019, 
+                              list('borough','neighborhood','bldclasscat','block','easement','lot','bldclasscurr','address',
+                                   'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+                                   'bldclasssale','price','date'))
+brooklyn_2020 <- func.df.trim(brooklyn_2020, 
+                              list('borough','neighborhood','bldclasscat','block','easement','lot','bldclasscurr','address',
+                                   'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+                                   'bldclasssale','price','date'))
 
-brooklyn_2016$borough <- trimws(brooklyn_2016$borough)
-brooklyn_2016$neighborhood <- trimws(brooklyn_2016$neighborhood)
-brooklyn_2016$bldclasscat <- trimws(brooklyn_2016$bldclasscat)
-brooklyn_2016$block <- trimws(brooklyn_2016$block)
-brooklyn_2016$easement <- trimws(brooklyn_2016$easement)
-brooklyn_2016$lot <- trimws(brooklyn_2016$lot)
-brooklyn_2016$bldclasscurr <- trimws(brooklyn_2016$bldclasscurr)
-brooklyn_2016$address <- trimws(brooklyn_2016$address)
-brooklyn_2016$aptnum <- trimws(brooklyn_2016$aptnum)
-brooklyn_2016$zip <- trimws(brooklyn_2016$zip)
-brooklyn_2016$resunits <- trimws(brooklyn_2016$resunits)
-brooklyn_2016$comunits <- trimws(brooklyn_2016$comunits)
-brooklyn_2016$totunits <- trimws(brooklyn_2016$totunits)
-brooklyn_2016$landsqft <- trimws(brooklyn_2016$landsqft)
-brooklyn_2016$grosssqft <- trimws(brooklyn_2016$grosssqft)
-brooklyn_2016$yrbuilt <- trimws(brooklyn_2016$yrbuilt)
-brooklyn_2016$taxclasssale <- trimws(brooklyn_2016$taxclasssale)
-brooklyn_2016$bldclasssale <- trimws(brooklyn_2016$bldclasssale)
-brooklyn_2016$price <- trimws(brooklyn_2016$price)
-brooklyn_2016$date <- trimws(brooklyn_2016$date)
 
 #replace column value '-' with empty
-brooklyn_2016$borough[brooklyn_2016$borough == "-"] <- ''
-brooklyn_2016$resunits[brooklyn_2016$resunits == "-"] <- ''
-brooklyn_2016$comunits[brooklyn_2016$comunits == "-"] <- ''
-brooklyn_2016$totunits[brooklyn_2016$totunits == "-"] <- ''
-brooklyn_2016$landsqft[brooklyn_2016$landsqft == "-"] <- ''
-brooklyn_2016$grosssqft[brooklyn_2016$grosssqft == "-"] <- ''
-brooklyn_2016$taxclasssale[brooklyn_2016$taxclasssale == "-"] <- ''
+brooklyn_2016 <- func.df.replace(brooklyn_2016, 
+                              list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+brooklyn_2017 <- func.df.replace(brooklyn_2017, 
+                                 list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+brooklyn_2018 <- func.df.replace(brooklyn_2018, 
+                                 list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+brooklyn_2019 <- func.df.replace(brooklyn_2019, 
+                                 list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+brooklyn_2020 <- func.df.replace(brooklyn_2020, 
+                                 list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
 
 #replace column value '-' with zero
-brooklyn_2016$price[brooklyn_2016$price == "-"] <- '0'
+brooklyn_2016 <- func.df.replace(brooklyn_2016,list('price'), '-', '0')
+brooklyn_2017 <- func.df.replace(brooklyn_2017,list('price'), '-', '0')
+brooklyn_2018 <- func.df.replace(brooklyn_2018,list('price'), '-', '0')
+brooklyn_2019 <- func.df.replace(brooklyn_2019,list('price'), '-', '0')
+brooklyn_2020 <- func.df.replace(brooklyn_2020,list('price'), '-', '0')
 
 #replace column value '0' with empty
-brooklyn_2016$yrbuilt[brooklyn_2016$yrbuilt == "0"] <- ''
+brooklyn_2016 <- func.df.replace(brooklyn_2016,list('yrbuilt'), '0', '')
+brooklyn_2017 <- func.df.replace(brooklyn_2017,list('yrbuilt'), '0', '')
+brooklyn_2018 <- func.df.replace(brooklyn_2018,list('yrbuilt'), '0', '')
+brooklyn_2019 <- func.df.replace(brooklyn_2019,list('yrbuilt'), '0', '')
+brooklyn_2020 <- func.df.replace(brooklyn_2020,list('yrbuilt'), '0', '')
 
 #change data types for following columns block
-brooklyn_2016$borough <- as.integer(brooklyn_2016$borough)
-brooklyn_2016$block <- as.integer(brooklyn_2016$block)
-brooklyn_2016$lot <- as.integer(brooklyn_2016$lot)
-brooklyn_2016$resunits <- as.integer(brooklyn_2016$resunits)
-brooklyn_2016$comunits <- as.integer(brooklyn_2016$comunits)
-brooklyn_2016$totunits <- as.integer(brooklyn_2016$totunits)
-brooklyn_2016$landsqft <- as.numeric(gsub(",", "", brooklyn_2016$landsqft))
-brooklyn_2016$grosssqft <- as.numeric(gsub(",", "", brooklyn_2016$grosssqft))
-brooklyn_2016$yrbuilt <- as.integer(brooklyn_2016$yrbuilt)
-brooklyn_2016$taxclasssale <- as.integer(brooklyn_2016$taxclasssale)
-brooklyn_2016$price <- as.numeric(gsub(",", "", brooklyn_2016$price))
-brooklyn_2016$date <- as.Date(brooklyn_2016$date, format="%m/%d/%Y")
+brooklyn_2016 <- func.df.ToInt(brooklyn_2016,list('borough','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2016 <- func.df.ToNum(brooklyn_2016,list('landsqft','grosssqft','price'))
+brooklyn_2016 <- func.df.ToDate(brooklyn_2016,list('date'),format="%m/%d/%Y")
+
+brooklyn_2017 <- func.df.ToInt(brooklyn_2017,list('borough','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2017 <- func.df.ToNum(brooklyn_2017,list('landsqft','grosssqft','price'))
+brooklyn_2017 <- func.df.ToDate(brooklyn_2017,list('date'),format="%m/%d/%y")
+
+brooklyn_2018 <- func.df.ToInt(brooklyn_2018,list('borough','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2018 <- func.df.ToNum(brooklyn_2018,list('landsqft','grosssqft','price'))
+brooklyn_2018 <- func.df.ToDate(brooklyn_2018,list('date'),format="%m/%d/%y")
+
+brooklyn_2019 <- func.df.ToInt(brooklyn_2019,list('borough','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2019 <- func.df.ToNum(brooklyn_2019,list('landsqft','grosssqft','price'))
+brooklyn_2019 <- func.df.ToDate(brooklyn_2019,list('date'),format="%m/%d/%y")
+
+brooklyn_2020 <- func.df.ToInt(brooklyn_2020,list('borough','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2020 <- func.df.ToNum(brooklyn_2020,list('landsqft','grosssqft','price'))
+brooklyn_2020 <- func.df.ToDate(brooklyn_2020,list('date'),format="%m/%d/%y")
 
 
+#merge the dataframes
+brooklyn_2016_2020_list <- list(brooklyn_2016, brooklyn_2017, brooklyn_2018, brooklyn_2019, brooklyn_2020)
+brooklyn_2016_2020_final <- brooklyn_2016_2020_list %>% reduce(full_join)
+remove(brooklyn_2016_2020_list)
+
+
+
+#1.3 Filter the data and make transformations specific to this analysis 
+
+#For the purposes of this analysis, we will only consider purchases of single-family residences and single-unit apartments 
+#or condos.  Restrict the data to purchases where the building class at the time of sale starts with ‘A’ or ‘R’ and where 
+#the number of total units and the number of residential units are both 1.  Additionally restrict the data to observations 
+#where gross square footage is more than 0 and sale price is non-missing.  The resulting dataset should have roughly 19,000 rows. 
