@@ -188,6 +188,9 @@ brooklyn_2020 <- func.df.ToNum(brooklyn_2020,list('landsqft','grosssqft','price'
 brooklyn_2020 <- func.df.ToDate(brooklyn_2020,list('date'),format="%m/%d/%y")
 brooklyn_2020 <- brooklyn_2020 %>% filter(!is.na(price))
 
+#After doing data cleaning for brooklyn 2019 & 2020, we reduced from 117151 rows to 107270
+total_observations_after_cleanup <- nrow(brooklyn_2016) + nrow(brooklyn_2017) + nrow(brooklyn_2018) + nrow(brooklyn_2019) + nrow(brooklyn_2020)
+
 
 #merge the dataframes
 brooklyn_2016_2020_list <- list(brooklyn_2016, brooklyn_2017, brooklyn_2018, brooklyn_2019, brooklyn_2020)
@@ -215,15 +218,17 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(resunits == 1 & 
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(grosssqft > 0 & !is.na(grosssqft))
 
 #additionally restrict the data to observation where sale price is non-missing
-brooklyn_2016_2020_final[["price"]][is.na(brooklyn_2016_2020_final[["price"]])] <- 0
+#brooklyn_2016_2020_final[["price"]][is.na(brooklyn_2016_2020_final[["price"]])] <- 0
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(!is.na(price))
-#brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price > 0 & !is.na(price))
 
 #additionally restrict the data to observation where Year Built is more than 0
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(yrbuilt > 0)
 
 #additionally restrict the data to observation where price is less than 10 million. I would consider those as outliers
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price < 10000000)
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price < 15000000)
+
+#additionally restrict the data to observation where grosssqft is less than 20k. I would consider those as outliers
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(grosssqft < 20000)
 
 
 #*******************************Step 2: EDA and feature engineering *******************************#
@@ -240,8 +245,113 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price < 10000000
 #of your predictors, or both.  Use this exploratory data analysis to revisit your initial data cleaning steps, which might need revision. 
 
 
-#plot home sale prices data
-plot(brooklyn_2016_2020_final$yrbuilt,brooklyn_2016_2020_final$price)
+#2.1.1 - plot and analysis between response and predictor variables
+plot(price ~ grosssqft, data = brooklyn_2016_2020_final, xlab = "Gross Sqft", ylab = "Price", pch = 20, cex = 2)
+plot(price ~ zip, data = brooklyn_2016_2020_final, xlab = "Zip", ylab = "Price", pch = 20, cex = 2)
+plot(price ~ yrbuilt, data = brooklyn_2016_2020_final, xlab = "Year Built", ylab = "Price", pch = 20, cex = 2)
+
+
+#2.1.2 - Neighborhood consolidation
+#https://www.unitedstateszipcodes.org/11223/
+#unique((brooklyn_2016_2020_final %>% filter(str_detect(neighborhood, "FLATBUSH-CENTRAL")))$zip)
+#unique((brooklyn_2016_2020_final %>% filter(str_detect(zip, "11234")))$neighborhood)
+
+#COBBLE HILL    same as   COBBLE HILL-WEST
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "COBBLE HILL-WEST")] <- "COBBLE HILL"
+
+#Zipcodes in neighborhoods FLATBUSH-CENTRAL, FLATBUSH-LEFFERTS GARDEN, FLATBUSH-EAST, FLATBUSH-NORTH overlap each other.
+#So combine all those neighborhoods to one as FLATBUSH
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "FLATBUSH-CENTRAL")] <- "FLATBUSH"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "FLATBUSH-LEFFERTS GARDEN")] <- "FLATBUSH"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "FLATBUSH-EAST")] <- "FLATBUSH"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "FLATBUSH-NORTH")] <- "FLATBUSH"
+
+#Zipcodes in neighborhoods DOWNTOWN-FULTON MALL, DOWNTOWN-FULTON FERRY, DOWNTOWN-METROTECH, BROOKLYN HEIGHTS overlap each other.
+#So combine all those neighborhoods to one as DOWNTOWN BROOKLYN
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "DOWNTOWN-FULTON MALL")] <- "DOWNTOWN BROOKLYN"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "DOWNTOWN-FULTON FERRY")] <- "DOWNTOWN BROOKLYN"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "DOWNTOWN-METROTECH")] <- "DOWNTOWN BROOKLYN"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "BROOKLYN HEIGHTS")] <- "DOWNTOWN BROOKLYN"
+
+#Zipcodes in neighborhoods OLD MILL BASIN, MILL BASIN overlap each other.
+#So combine all those neighborhoods to one as MILL BASIN
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OLD MILL BASIN")] <- "MILL BASIN"
+
+#Zipcodes in neighborhoods WILLIAMSBURG-SOUTH, WILLIAMSBURG-NORTH, WILLIAMSBURG-CENTRAL, WILLIAMSBURG-EAST overlap each other.
+#So combine all those neighborhoods to one as DOWNTOWN BROOKLYN
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "WILLIAMSBURG-SOUTH")] <- "WILLIAMSBURG"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "WILLIAMSBURG-NORTH")] <- "WILLIAMSBURG"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "WILLIAMSBURG-CENTRAL")] <- "WILLIAMSBURG"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "WILLIAMSBURG-EAST")] <- "WILLIAMSBURG"
+
+#Zipcodes in neighborhoods PARK SLOPE, PARK SLOPE SOUTH overlap each other.
+#So combine all those neighborhoods to one as PARK SLOPE SOUTH
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "PARK SLOPE")] <- "PARK SLOPE SOUTH"
+
+#Zipcode 11234 actually belongs to BERGEN BEACH
+#So modify all those neighborhoods where zipcode=11234 to BERGEN BEACH.
+#Here zipcode in neighborhoods MILL BASIN, FLATLANDS changed to BERGEN BEACH
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11234")] <- "BERGEN BEACH"
+
+#Zipcode 11223 actually belongs to BENSONHURST
+#So modify all those neighborhoods where zipcode=11223 to BENSONHURST.
+#Here zipcode in neighborhoods OCEAN PARKWAY-NORTH, OCEAN PARKWAY-SOUTH changed to BENSONHURST
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11223")] <- "BENSONHURST"
+
+#Zipcode 11235 actually belongs to SHEEPSHEAD BAY
+#So modify all those neighborhoods where zipcode=11235 to SHEEPSHEAD BAY
+#Here zipcode in neighborhoods OCEAN PARKWAY-SOUTH,MANHATTAN BEACH,BRIGHTON BEACH changed to SHEEPSHEAD BAY
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11235")] <- "SHEEPSHEAD BAY"
+
+#Zipcode 11221 actually belongs to BUSHWICK
+#So modify neighborhood=OCEAN HILL and zipcode=11221 to BUSHWICK
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11221") & 
+                                           str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN HILL")] <- "BUSHWICK"
+
+#Zipcode 11212 actually belongs to BROWNSVILLE
+#So modify neighborhood=OCEAN HILL and zipcode=11212 to BROWNSVILLE
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11212") & 
+                                             str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN HILL")] <- "BROWNSVILLE"
+
+
+#Zipcode 11230 actually belongs to OCEAN PARKWAY-NORTH
+#So modify neighborhood=OCEAN HILL and zipcode=11230 to OCEAN PARKWAY-NORTH
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11230") & 
+                                             str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN HILL")] <- "OCEAN PARKWAY-NORTH"
+
+
+#Zipcode 11201 actually belongs to DOWNTOWN BROOKLYN
+#So modify neighborhood=OCEAN HILL & OCEAN PARKWAY-NORTH and zipcode=11201 to DOWNTOWN BROOKLYN
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11201") & 
+                                             str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN HILL")] <- "DOWNTOWN BROOKLYN"
+brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11201") & 
+                                             str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN PARKWAY-NORTH")] <- "DOWNTOWN BROOKLYN"
+
+
+
+#2.1.3 - Additionally restrict the data to observation where price is greater than 0
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price > 0 & !is.na(price))
+
+
+#2.1.4 - check the model summary without any transformation
+brooklyn_2016_2020_final.lm.native <- lm(formula = price~
+                                           factor(bldclasssale)+
+                                           factor(neighborhood)+
+                                           factor(zip)+
+                                           grosssqft+landsqft+
+                                           yrbuilt+taxclasssale,
+                                         brooklyn_2016_2020_final)
+brooklyn_2016_2020_final.lm.native.summary <- summary(brooklyn_2016_2020_final.lm.native)
+brooklyn_2016_2020_final.lm.native.summary
+
+#get metrics from native model summary
+brooklyn_2016_2020_final.lm.native.summary.metric <- data.frame(
+  R2 = brooklyn_2016_2020_final.lm.native.summary$r.squared,
+  Adj.R2 = brooklyn_2016_2020_final.lm.native.summary$adj.r.squared
+)
+
+RMSE_native_model <- sqrt(mean(brooklyn_2016_2020_final.lm.native.summary$residuals^2))
+sprintf("Root Mean Square Error(RMSE) for Native Model : %s", round(RMSE_native_model, digits = 4))
 
 
 #2.2 Pre-modeling and feature engineering
@@ -252,13 +362,171 @@ plot(brooklyn_2016_2020_final$yrbuilt,brooklyn_2016_2020_final$price)
 
 #brooklyn_2016_2020_final.lm <- lm(logprice~resunits+totunits+grosssqft+sqrt(grosssqft)+landsqft+sqrt(landsqft)+factor(decade)+logage,brooklyn_2016_2020_final)
 
-#check the model summary without any transformation
-brooklyn_2016_2020_final.lm.native <- lm(formula = price~
-                                    factor(bldclasssale)+
-                                    factor(neighborhood)+
-                                    factor(zip)+
-                                    grosssqft+landsqft+
-                                    yrbuilt+taxclasssale,
-                                  brooklyn_2016_2020_final)
-brooklyn_2016_2020_final.lm.native.summary <- summary(brooklyn_2016_2020_final.lm.native)
-brooklyn_2016_2020_final.lm.native.summary
+
+#feature engineering
+
+#2.2.1 - find the average price of each neighborhood and assign that price to price having 0 for those matching neighborhood
+unique_neighborhoods <- as.list(unique(brooklyn_2016_2020_final$neighborhood))
+
+func.df.adjPrice <- function(df, neighborhoods) {
+  colname_price = 'price'
+  colname_neighborhood = 'neighborhood'
+  for (item in neighborhoods) {
+    df_price_temp <- df %>% filter(price > 0 & neighborhood == item)
+    df[[colname_price]][df[[colname_price]] == 0 & df[[colname_neighborhood]] == item] <- floor(mean(df_price_temp$price))
+  }
+  
+  return(df)
+}
+#brooklyn_2016_2020_final <- func.df.adjPrice(brooklyn_2016_2020_final, unique_neighborhoods)
+
+
+#2.2.2 - extract year from sale date
+brooklyn_2016_2020_final$yrsold <- format(brooklyn_2016_2020_final$date,"%Y")
+brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('yrsold'))
+
+#2.2.3 - adding decade as new column. Also as the year build increases the house price decreases
+brooklyn_2016_2020_final$decade <- 10*floor(brooklyn_2016_2020_final$yrbuilt/10)
+brooklyn_2016_2020_final$decade[brooklyn_2016_2020_final$decade<1950] <- 1950
+#aggregate(data = brooklyn_2016_2020_final, yrbuilt ~ decade, function(x) length(unique(x)))
+
+#2.2.4.1 - group all "A5" "A1" "A9" "A4" "A3" "A2" "A0" "A7" "A6" to "A"
+#2.2.4.2 - group all "R3" "R2" "R4" "R1" "R6" "RR" to "R"
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
+  mutate(bldclasssalecategory = case_when(
+    str_detect(bldclasssale, "^A")  ~ "A",
+    str_detect(bldclasssale, "^R")  ~ "R"
+  ))
+
+#log transformations of response
+brooklyn_2016_2020_final$logprice <- log(brooklyn_2016_2020_final$price)
+#brooklyn_2016_2020_final$logadjprice <- log(brooklyn_2016_2020_final$adjprice)
+
+#log transformations of predictors
+brooklyn_2016_2020_final$logage <- log(brooklyn_2016_2020_final$yrsold-brooklyn_2016_2020_final$yrbuilt+0.1)
+brooklyn_2016_2020_final$loggrosssqft <- log(brooklyn_2016_2020_final$grosssqft)
+
+#functions of two different variables transformations of predictor variables
+brooklyn_2016_2020_final$totsqft <- brooklyn_2016_2020_final$landsqft + brooklyn_2016_2020_final$grosssqft
+
+
+#2.2.5 - plot and analysis between response and predictor variables
+plot(price ~ grosssqft, data = brooklyn_2016_2020_final, xlab = "Gross Sqft", ylab = "Adj Price", pch = 20, cex = 2)
+plot(price ~ zip, data = brooklyn_2016_2020_final, xlab = "Zip", ylab = "Adj Price", pch = 20, cex = 2)
+plot(price ~ yrbuilt, data = brooklyn_2016_2020_final, xlab = "Year Built", ylab = "Adj Price", pch = 20, cex = 2)
+plot(price ~ decade, data = brooklyn_2016_2020_final, xlab = "Decade", ylab = "Adj Price", pch = 20, cex = 2)
+
+
+#check the model summary after transformations
+brooklyn_2016_2020_final.lm.transform <- lm(formula = price~
+                                              factor(bldclasssalecategory)+
+                                              factor(neighborhood)+
+                                              grosssqft+sqrt(grosssqft)+
+                                              factor(decade)+
+                                              yrbuilt+
+                                              logage+
+                                              taxclasssale,
+                                            brooklyn_2016_2020_final)
+brooklyn_2016_2020_final.lm.transform.summary <- summary(brooklyn_2016_2020_final.lm.transform)
+brooklyn_2016_2020_final.lm.transform.summary
+
+#get metrics from transformed model summary
+brooklyn_2016_2020_final.lm.transform.summary.metric <- data.frame(
+  R2 = brooklyn_2016_2020_final.lm.transform.summary$r.squared,
+  Adj.R2 = brooklyn_2016_2020_final.lm.transform.summary$adj.r.squared
+)
+
+RMSE_transform_model <- sqrt(mean(brooklyn_2016_2020_final.lm.transform.summary$residuals^2))
+sprintf("Root Mean Square Error(RMSE) for Transform Model : %s", round(RMSE_transform_model, digits = 4))
+
+
+
+
+#*********************************************BEGIN TROUBLESHOOTING***************************************************/
+
+test_brooklyn_2016_2020_final <- brooklyn_2016_2020_final
+
+par(mfrow = c(1, 2))
+plot(adjprice ~ grosssqft, data = test_brooklyn_2016_2020_final, col = "dodgerblue", pch = 20, cex = 1.5)
+test.lm = lm(adjprice ~ grosssqft, data = test_brooklyn_2016_2020_final)
+abline(test.lm, col = "darkorange", lwd = 2)
+plot(fitted(test.lm), resid(test.lm), col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
+#log transform of the response
+par(mfrow = c(1, 2))
+plot(log(adjprice) ~ grosssqft, data = test_brooklyn_2016_2020_final, col = "dodgerblue", pch = 20, cex = 1.5)
+test.lm.log = lm(log(adjprice) ~ grosssqft, data = test_brooklyn_2016_2020_final)
+abline(test.lm.log, col = "darkorange", lwd = 2)
+plot(fitted(test.lm.log), resid(test.lm.log), col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
+#log transform of the response and predictor
+par(mfrow = c(1, 2))
+plot(log(adjprice) ~ log(grosssqft), data = test_brooklyn_2016_2020_final, col = "dodgerblue", pch = 20, cex = 1.5)
+test.lm.log.log = lm(log(adjprice) ~ log(grosssqft), data = test_brooklyn_2016_2020_final)
+abline(test.lm.log.log, col = "darkorange", lwd = 2)
+plot(fitted(test.lm.log.log), resid(test.lm.log.log), col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
+test.brooklyn_2016_2020_final.lm.transform <- lm(formula = logadjprice~
+                                                   factor(bldclasssalecategory)+
+                                                   factor(neighborhood)+
+                                                   factor(zip)+
+                                                   loggrosssqft+landsqft+
+                                                   yrbuilt+taxclasssale,
+                                              test_brooklyn_2016_2020_final)
+test.brooklyn_2016_2020_final.lm.transform.summary <- summary(brooklyn_2016_2020_final.lm.transform)
+test.brooklyn_2016_2020_final.lm.transform.summary
+
+
+
+
+
+
+
+hist(brooklyn_2016_2020_final$grosssqft)
+hist(brooklyn_2016_2020_final$landsqft)
+hist(brooklyn_2016_2020_final$yrbuilt)
+
+
+ggplot(brooklyn_2016_2020_final, aes(x = grosssqft, y = price)) +
+  geom_point()
+
+aggregate(data = brooklyn_2016_2020_final, neighborhood ~ zip, function(x) length(unique(x)))
+aggregate(data = brooklyn_2016_2020_final, zip ~ neighborhood, function(x) length(unique(x)))
+
+
+
+
+brooklyn_2016_2020_final %>% filter(price == 0 & neighborhood == 'SPRING CREEK')
+
+
+
+brooklyn_2016_2020_temp <- brooklyn_2016_2020_final %>% filter(price > 0 & neighborhood == 'SPRING CREEK')
+mean(brooklyn_2016_2020_temp$price)
+
+
+
+brooklyn_2016_2020_temp <- brooklyn_2016_2020_final
+
+func.df.adjPrice <- function(df, neighborhoods) {
+  df$adjprice = df$price
+  for (neighborhood in neighborhoods) {
+    df_temp <- df %>% filter(price > 0 & neighborhood == neighborhood)
+    df$price[df$adjprice == 0 & df$neighborhood == neighborhood] <- mean(df_temp$price)
+  }
+  
+  return(df)
+}
+
+unique_neighborhoods <- as.list(unique(brooklyn_2016_2020_final$neighborhood))
+
+test_brooklyn_2016_2020_final <- brooklyn_2016_2020_final
+
+test_brooklyn_2016_2020_final <- func.df.adjPrice(test_brooklyn_2016_2020_final, unique_neighborhoods)
+
+#*********************************************END TROUBLESHOOTING***************************************************/
