@@ -163,27 +163,27 @@ brooklyn_2020 <- func.df.replace(brooklyn_2020,
 #brooklyn_2020 <- func.df.replace(brooklyn_2020,list('yrbuilt'), '0', '')
 
 #change data types for following columns
-brooklyn_2016 <- func.df.ToInt(brooklyn_2016,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2016 <- func.df.ToInt(brooklyn_2016,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale','zip'))
 brooklyn_2016 <- func.df.ToNum(brooklyn_2016,list('landsqft','grosssqft','price'))
 brooklyn_2016 <- func.df.ToDate(brooklyn_2016,list('date'),format="%m/%d/%Y")
 brooklyn_2016 <- brooklyn_2016 %>% filter(!is.na(price))
 
-brooklyn_2017 <- func.df.ToInt(brooklyn_2017,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2017 <- func.df.ToInt(brooklyn_2017,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale','zip'))
 brooklyn_2017 <- func.df.ToNum(brooklyn_2017,list('landsqft','grosssqft','price'))
 brooklyn_2017 <- func.df.ToDate(brooklyn_2017,list('date'),format="%m/%d/%y")
 brooklyn_2017 <- brooklyn_2017 %>% filter(!is.na(price))
 
-brooklyn_2018 <- func.df.ToInt(brooklyn_2018,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2018 <- func.df.ToInt(brooklyn_2018,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale','zip'))
 brooklyn_2018 <- func.df.ToNum(brooklyn_2018,list('landsqft','grosssqft','price'))
 brooklyn_2018 <- func.df.ToDate(brooklyn_2018,list('date'),format="%m/%d/%y")
 brooklyn_2018 <- brooklyn_2018 %>% filter(!is.na(price))
 
-brooklyn_2019 <- func.df.ToInt(brooklyn_2019,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2019 <- func.df.ToInt(brooklyn_2019,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale','zip'))
 brooklyn_2019 <- func.df.ToNum(brooklyn_2019,list('landsqft','grosssqft','price'))
 brooklyn_2019 <- func.df.ToDate(brooklyn_2019,list('date'),format="%m/%d/%y")
 brooklyn_2019 <- brooklyn_2019 %>% filter(!is.na(price))
 
-brooklyn_2020 <- func.df.ToInt(brooklyn_2020,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale'))
+brooklyn_2020 <- func.df.ToInt(brooklyn_2020,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale','zip'))
 brooklyn_2020 <- func.df.ToNum(brooklyn_2020,list('landsqft','grosssqft','price'))
 brooklyn_2020 <- func.df.ToDate(brooklyn_2020,list('date'),format="%m/%d/%y")
 brooklyn_2020 <- brooklyn_2020 %>% filter(!is.na(price))
@@ -329,9 +329,11 @@ brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[[
 
 
 
-#2.1.3 - Additionally restrict the data to observation where price is greater than 0
+#2.1.3.1 - Additionally restrict the data to observation where price is greater than 0
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price > 0 & !is.na(price))
 
+#2.1.3.2 - Additionally restrict the data to observation where zip is greater than 0
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(zip > 0)
 
 #2.1.4 - check the model summary without any transformation
 brooklyn_2016_2020_final.lm.native <- lm(formula = price~
@@ -430,6 +432,19 @@ brooklyn_2016_2020_final.lm.transform <- lm(formula = price~
 brooklyn_2016_2020_final.lm.transform.summary <- summary(brooklyn_2016_2020_final.lm.transform)
 brooklyn_2016_2020_final.lm.transform.summary
 
+#TESTING
+brooklyn_2016_2020_final.lm.transform <- lm(formula = price~
+                                              factor(bldclasssalecategory)+
+                                              factor(zip)+
+                                              grosssqft+sqrt(grosssqft)+
+                                              factor(decade)+
+                                              yrbuilt+
+                                              logage+
+                                              taxclasssale,
+                                            brooklyn_2016_2020_final)
+brooklyn_2016_2020_final.lm.transform.summary <- summary(brooklyn_2016_2020_final.lm.transform)
+brooklyn_2016_2020_final.lm.transform.summary
+
 #get metrics from transformed model summary
 brooklyn_2016_2020_final.lm.transform.summary.metric <- data.frame(
   R2 = brooklyn_2016_2020_final.lm.transform.summary$r.squared,
@@ -438,3 +453,4 @@ brooklyn_2016_2020_final.lm.transform.summary.metric <- data.frame(
 
 RMSE_transform_model <- sqrt(mean(brooklyn_2016_2020_final.lm.transform.summary$residuals^2))
 sprintf("Root Mean Square Error(RMSE) for Transform Model : %s", round(RMSE_transform_model, digits = 4))
+
