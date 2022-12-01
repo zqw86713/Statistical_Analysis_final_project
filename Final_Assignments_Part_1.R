@@ -12,17 +12,24 @@ library(dplyr)
 library(tidyverse)
 library(ggplot2)
 
-setwd('C:\\Prinu\\Personal\\Studies\\Masters\\UChicago\\After Admission\\Courses\\Statistical Analysis\\Assignments\\Final Assignment - Part1\\data')
+# setwd('C:\\Prinu\\Personal\\Studies\\Masters\\UChicago\\After Admission\\Courses\\Statistical Analysis\\Assignments\\Final Assignment - Part1\\data')
+
+# added by Qingwei
+setwd("C:/Users/QZHAN101/Downloads/play/UCHICAGO/MSCA_31007_ON01_Autumn_2022_Statistical_Analysis/Statistical_Analysis_final_project")
 
 #*******************************Step 1: Import and prepare the data for analysis*******************************#
 
 
 #1.1 Bring the data into R
-#Using R, bring all five datasets into your workspace.  Notice that all five datasets have 21 columns, 
-#with similar (but not identical) column names.  Please use the following vector of column names to standardize the data.
+#Using R, bring all five datasets into your workspace.  
+# Notice that all five datasets have 21 columns, 
+#with similar (but not identical) column names.  Please use the following
+# vector of column names to standardize the data.
 
-#c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot','easement','bldclasscurr','address',
-#'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale','bldclasssale','price','date') 
+#c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot',
+# 'easement','bldclasscurr','address',
+#'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft',
+#''yrbuilt','taxclasssale','bldclasssale','price','date') 
 
 brooklyn_2016 <- read.csv('2016_brooklyn.csv')
 brooklyn_2017 <- read.csv('2017_brooklyn.csv')
@@ -38,9 +45,29 @@ brooklyn_2019 <- tail(brooklyn_2019, -4)
 brooklyn_2020 <- tail(brooklyn_2020, -7)
 
 #define column names for each dataframes
-colnames <- c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot','easement',
-              'bldclasscurr','address','aptnum','zip','resunits','comunits','totunits','landsqft',
-              'grosssqft','yrbuilt','taxclasssale','bldclasssale','price','date')
+colnames <- c(
+  "borough",
+  "neighborhood",
+  "bldclasscat",
+  "taxclasscurr",
+  "block",
+  "lot",
+  "easement",
+  "bldclasscurr",
+  "address",
+  "aptnum",
+  "zip",
+  "resunits",
+  "comunits",
+  "totunits",
+  "landsqft",
+  "grosssqft",
+  "yrbuilt",
+  "taxclasssale",
+  "bldclasssale",
+  "price",
+  "date"
+)
 
 colnames(brooklyn_2016) <- colnames
 colnames(brooklyn_2017) <- colnames
