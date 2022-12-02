@@ -12,17 +12,24 @@ library(dplyr)
 library(tidyverse)
 library(ggplot2)
 
-setwd('C:\\Prinu\\Personal\\Studies\\Masters\\UChicago\\After Admission\\Courses\\Statistical Analysis\\Assignments\\Final Assignment - Part1\\data')
+# setwd('C:\\Prinu\\Personal\\Studies\\Masters\\UChicago\\After Admission\\Courses\\Statistical Analysis\\Assignments\\Final Assignment - Part1\\data')
+
+# added by Qingwei
+setwd("C:/Users/QZHAN101/Downloads/play/UCHICAGO/MSCA_31007_ON01_Autumn_2022_Statistical_Analysis/Statistical_Analysis_final_project")
 
 #*******************************Step 1: Import and prepare the data for analysis*******************************#
 
 
 #1.1 Bring the data into R
-#Using R, bring all five datasets into your workspace.  Notice that all five datasets have 21 columns, 
-#with similar (but not identical) column names.  Please use the following vector of column names to standardize the data.
+#Using R, bring all five datasets into your workspace.  
+# Notice that all five datasets have 21 columns, 
+#with similar (but not identical) column names.  Please use the following
+# vector of column names to standardize the data.
 
-#c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot','easement','bldclasscurr','address',
-#'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale','bldclasssale','price','date') 
+#c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot',
+# 'easement','bldclasscurr','address',
+#'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft',
+#''yrbuilt','taxclasssale','bldclasssale','price','date') 
 
 brooklyn_2016 <- read.csv('2016_brooklyn.csv')
 brooklyn_2017 <- read.csv('2017_brooklyn.csv')
@@ -38,10 +45,31 @@ brooklyn_2019 <- tail(brooklyn_2019, -4)
 brooklyn_2020 <- tail(brooklyn_2020, -7)
 
 #define column names for each dataframes
-colnames <- c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot','easement',
-              'bldclasscurr','address','aptnum','zip','resunits','comunits','totunits','landsqft',
-              'grosssqft','yrbuilt','taxclasssale','bldclasssale','price','date')
+colnames <- c(
+  "borough",
+  "neighborhood",
+  "bldclasscat",
+  "taxclasscurr",
+  "block",
+  "lot",
+  "easement",
+  "bldclasscurr",
+  "address",
+  "aptnum",
+  "zip",
+  "resunits",
+  "comunits",
+  "totunits",
+  "landsqft",
+  "grosssqft",
+  "yrbuilt",
+  "taxclasssale",
+  "bldclasssale",
+  "price",
+  "date"
+)
 
+# set the column names of a matrix-like object.
 colnames(brooklyn_2016) <- colnames
 colnames(brooklyn_2017) <- colnames
 colnames(brooklyn_2018) <- colnames
@@ -57,11 +85,16 @@ rownames(brooklyn_2020) <- 1:nrow(brooklyn_2020)
 
 
 #1.2 Join the data and make it usable for analysis
-#There are some data cleaning steps and transformations that would be necessary or helpful to almost any analysis.  
-#Consider your data carefully, column by column.  Re-format, change data types, pay attention to white space and 
-#special characters.  Datasets kept over multiple years are not always created in exactly the same way, so take 
-#care that your data is standardized across years.  When you are done, create a new datasets which joins all 
-#five yearly datasets.  This step will likely take a large amount of time.  Do not assume you can complete it quickly.  
+#There are some data cleaning steps and transformations that would be 
+# necessary or helpful to almost any analysis.  
+#Consider your data carefully, column by column.  Re-format, change data 
+# types, pay attention to white space and 
+#special characters.  Datasets kept over multiple years are not always 
+# created in exactly the same way, so take 
+#care that your data is standardized across years.  When you are done, 
+# create a new datasets which joins all 
+#five yearly datasets.  This step will likely take a large amount of time.
+# Do not assume you can complete it quickly.  
 #The resulting dataset should have roughly 119,000 rows.
 
 
@@ -72,10 +105,15 @@ brooklyn_2018 <- brooklyn_2018[!apply(brooklyn_2018 == "", 1, all),]
 brooklyn_2019 <- brooklyn_2019[!apply(brooklyn_2019 == "", 1, all),]
 brooklyn_2020 <- brooklyn_2020[!apply(brooklyn_2020 == "", 1, all),]
 
-#since we removed blank rows from brooklyn 2019 & 2020, we reduced from 119351 rows to 117151
-total_observations <- nrow(brooklyn_2016) + nrow(brooklyn_2017) + nrow(brooklyn_2018) + nrow(brooklyn_2019) + nrow(brooklyn_2020)
+#since we removed blank rows from brooklyn 2019 & 2020, we reduced 
+# from 119351 rows to 117151
+total_observations <- nrow(brooklyn_2016) + 
+  nrow(brooklyn_2017) + 
+  nrow(brooklyn_2018) + 
+  nrow(brooklyn_2019) +
+  nrow(brooklyn_2020)
 
-#define functions
+#define functions. This one is for trim white space.
 func.df.trim <- function(df, colnames) {
   for (colname in colnames) {
     df[[colname]] <- trimws(df[[colname]])
@@ -83,6 +121,7 @@ func.df.trim <- function(df, colnames) {
   
   return(df)
 }
+
 func.df.replace <- function(df, colnames, oldvalue, newvalue) {
   for (colname in colnames) {
     df[[colname]][df[[colname]] == oldvalue] <- newvalue
@@ -90,6 +129,8 @@ func.df.replace <- function(df, colnames, oldvalue, newvalue) {
   
   return(df)
 }
+
+# convert element to integer.
 func.df.ToInt <- function(df, colnames) {
   for (colname in colnames) {
     df[[colname]] <- as.integer(df[[colname]])
@@ -97,14 +138,20 @@ func.df.ToInt <- function(df, colnames) {
   
   return(df)
 }
+
+# remove the comma in elements, e.g., "1,003" will be "1003"
 func.df.ToNum <- function(df, colnames) {
   for (colname in colnames) {
     df[[colname]] <- str_replace_all(df[[colname]], "[^0-9.]", "")
-    df[[colname]] <- suppressWarnings(as.numeric(gsub(",", "", format(df[[colname]], scientific = F))))
+    df[[colname]] <- suppressWarnings(
+        as.numeric(gsub(",", "", format(df[[colname]], scientific = F)))
+      )
   }
   
   return(df)
 }
+
+# convert the date to a specific format.
 func.df.ToDate <- function(df, colnames, format) {
   for (colname in colnames) {
     date_formatted <- as.POSIXct(df[[colname]], format=format)
@@ -115,26 +162,37 @@ func.df.ToDate <- function(df, colnames, format) {
 }
 
 #trim leading and trailing white spaces for columns
-brooklyn_2016 <- func.df.trim(brooklyn_2016, 
-                         list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-                              'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-                              'bldclasssale','price','date'))
-brooklyn_2017 <- func.df.trim(brooklyn_2017, 
-                              list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-                                   'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-                                   'bldclasssale','price','date'))
-brooklyn_2018 <- func.df.trim(brooklyn_2018, 
-                              list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-                                   'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-                                   'bldclasssale','price','date'))
-brooklyn_2019 <- func.df.trim(brooklyn_2019, 
-                              list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-                                   'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-                                   'bldclasssale','price','date'))
-brooklyn_2020 <- func.df.trim(brooklyn_2020, 
-                              list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-                                   'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-                                   'bldclasssale','price','date'))
+
+# brooklyn_2016 <- func.df.trim(brooklyn_2016, 
+#                          list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
+#                               'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+#                               'bldclasssale','price','date'))
+# 
+# brooklyn_2017 <- func.df.trim(brooklyn_2017, 
+#                               list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
+#                                    'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+#                                    'bldclasssale','price','date'))
+# brooklyn_2018 <- func.df.trim(brooklyn_2018, 
+#                               list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
+#                                    'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+#                                    'bldclasssale','price','date'))
+# brooklyn_2019 <- func.df.trim(brooklyn_2019, 
+#                               list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
+#                                    'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+#                                    'bldclasssale','price','date'))
+# brooklyn_2020 <- func.df.trim(brooklyn_2020, 
+#                               list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
+#                                    'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
+#                                    'bldclasssale','price','date'))
+
+
+brooklyn_2016 <- func.df.trim(brooklyn_2016, colnames)
+brooklyn_2017 <- func.df.trim(brooklyn_2017, colnames)
+brooklyn_2018 <- func.df.trim(brooklyn_2018, colnames)
+brooklyn_2019 <- func.df.trim(brooklyn_2019, colnames)
+brooklyn_2020 <- func.df.trim(brooklyn_2020, colnames)
+
+
 
 
 #check if resunits is '-' for totunit= 1 and bldclasssale= starts with A or R and taxclasscurr= starts with 1 or 2
@@ -143,17 +201,30 @@ brooklyn_2020 <- func.df.trim(brooklyn_2020,
 #                           (str_detect(taxclasscurr, "^1") | str_detect(taxclasscurr, "^2")))
 
 
+
 #replace column value '-' with empty
-brooklyn_2016 <- func.df.replace(brooklyn_2016, 
-                              list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
-brooklyn_2017 <- func.df.replace(brooklyn_2017, 
-                                 list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
-brooklyn_2018 <- func.df.replace(brooklyn_2018, 
-                                 list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
-brooklyn_2019 <- func.df.replace(brooklyn_2019, 
-                                 list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
-brooklyn_2020 <- func.df.replace(brooklyn_2020, 
-                                 list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+
+
+# brooklyn_2016 <- func.df.replace(brooklyn_2016, 
+#                               list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+# brooklyn_2017 <- func.df.replace(brooklyn_2017, 
+#                                  list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+# brooklyn_2018 <- func.df.replace(brooklyn_2018, 
+#                                  list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+# brooklyn_2019 <- func.df.replace(brooklyn_2019, 
+#                                  list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+# brooklyn_2020 <- func.df.replace(brooklyn_2020, 
+#                                  list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
+
+columns_with_hyphen = c('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale')
+
+brooklyn_2016 <- func.df.replace(brooklyn_2016, columns_with_hyphen, '-', '')
+brooklyn_2017 <- func.df.replace(brooklyn_2017, columns_with_hyphen, '-', '')
+brooklyn_2018 <- func.df.replace(brooklyn_2018, columns_with_hyphen, '-', '')
+brooklyn_2019 <- func.df.replace(brooklyn_2019, columns_with_hyphen, '-', '')
+brooklyn_2020 <- func.df.replace(brooklyn_2020, columns_with_hyphen, '-', '')
+ 
+
 
 #replace column value '0' with empty
 #brooklyn_2016 <- func.df.replace(brooklyn_2016,list('yrbuilt'), '0', '')
@@ -189,11 +260,21 @@ brooklyn_2020 <- func.df.ToDate(brooklyn_2020,list('date'),format="%m/%d/%y")
 brooklyn_2020 <- brooklyn_2020 %>% filter(!is.na(price))
 
 #After doing data cleaning for brooklyn 2019 & 2020, we reduced from 117151 rows to 107270
-total_observations_after_cleanup <- nrow(brooklyn_2016) + nrow(brooklyn_2017) + nrow(brooklyn_2018) + nrow(brooklyn_2019) + nrow(brooklyn_2020)
+total_observations_after_cleanup <- nrow(brooklyn_2016) + 
+  nrow(brooklyn_2017) + 
+  nrow(brooklyn_2018) + 
+  nrow(brooklyn_2019) +
+  nrow(brooklyn_2020)
 
 
 #merge the dataframes
-brooklyn_2016_2020_list <- list(brooklyn_2016, brooklyn_2017, brooklyn_2018, brooklyn_2019, brooklyn_2020)
+brooklyn_2016_2020_list <- list(
+  brooklyn_2016, 
+  brooklyn_2017, 
+  brooklyn_2018, 
+  brooklyn_2019, 
+  brooklyn_2020
+)
 brooklyn_2016_2020 <- brooklyn_2016_2020_list %>% reduce(full_join)
 remove(brooklyn_2016_2020_list)
 
@@ -209,26 +290,35 @@ remove(brooklyn_2016_2020_list)
 
 #filter observations considering purchases of single-family residences and single-unit apartments or condos
 #Restrict the data to purchases where the building class at the time of sale starts with ‘A’ or ‘R’
-brooklyn_2016_2020_final <- brooklyn_2016_2020 %>% filter(str_detect(bldclasssale, "^A") | str_detect(bldclasssale, "^R"))
+brooklyn_2016_2020_final <- brooklyn_2016_2020 %>% 
+  filter(str_detect(bldclasssale, "^A") | str_detect(bldclasssale, "^R"))
 
 #the number of total units and the number of residential units are both 1
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(resunits == 1 & totunits == 1)
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(resunits == 1 & totunits == 1)
 
 #additionally restrict the data to observation where gross square footage is more than 0
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(grosssqft > 0 & !is.na(grosssqft))
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(grosssqft > 0 & !is.na(grosssqft))
 
 #additionally restrict the data to observation where sale price is non-missing
 #brooklyn_2016_2020_final[["price"]][is.na(brooklyn_2016_2020_final[["price"]])] <- 0
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(!is.na(price))
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(!is.na(price))
 
 #additionally restrict the data to observation where Year Built is more than 0
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(yrbuilt > 0)
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(yrbuilt > 0)
 
-#additionally restrict the data to observation where price is less than 10 million. I would consider those as outliers
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price < 15000000)
+#additionally restrict the data to observation where price is less than 
+# 10 million. I would consider those as outliers
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(price < 15000000)
 
-#additionally restrict the data to observation where grosssqft is less than 20k. I would consider those as outliers
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(grosssqft < 20000)
+#additionally restrict the data to observation where grosssqft is less than 20k. 
+# I would consider those as outliers
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(grosssqft < 20000)
 
 
 #*******************************Step 2: EDA and feature engineering *******************************#
