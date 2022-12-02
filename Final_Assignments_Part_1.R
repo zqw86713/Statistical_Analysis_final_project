@@ -268,7 +268,13 @@ total_observations_after_cleanup <- nrow(brooklyn_2016) +
 
 
 #merge the dataframes
-brooklyn_2016_2020_list <- list(brooklyn_2016, brooklyn_2017, brooklyn_2018, brooklyn_2019, brooklyn_2020)
+brooklyn_2016_2020_list <- list(
+  brooklyn_2016, 
+  brooklyn_2017, 
+  brooklyn_2018, 
+  brooklyn_2019, 
+  brooklyn_2020
+)
 brooklyn_2016_2020 <- brooklyn_2016_2020_list %>% reduce(full_join)
 remove(brooklyn_2016_2020_list)
 
@@ -284,26 +290,35 @@ remove(brooklyn_2016_2020_list)
 
 #filter observations considering purchases of single-family residences and single-unit apartments or condos
 #Restrict the data to purchases where the building class at the time of sale starts with ‘A’ or ‘R’
-brooklyn_2016_2020_final <- brooklyn_2016_2020 %>% filter(str_detect(bldclasssale, "^A") | str_detect(bldclasssale, "^R"))
+brooklyn_2016_2020_final <- brooklyn_2016_2020 %>% 
+  filter(str_detect(bldclasssale, "^A") | str_detect(bldclasssale, "^R"))
 
 #the number of total units and the number of residential units are both 1
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(resunits == 1 & totunits == 1)
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(resunits == 1 & totunits == 1)
 
 #additionally restrict the data to observation where gross square footage is more than 0
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(grosssqft > 0 & !is.na(grosssqft))
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(grosssqft > 0 & !is.na(grosssqft))
 
 #additionally restrict the data to observation where sale price is non-missing
 #brooklyn_2016_2020_final[["price"]][is.na(brooklyn_2016_2020_final[["price"]])] <- 0
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(!is.na(price))
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(!is.na(price))
 
 #additionally restrict the data to observation where Year Built is more than 0
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(yrbuilt > 0)
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(yrbuilt > 0)
 
-#additionally restrict the data to observation where price is less than 10 million. I would consider those as outliers
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price < 15000000)
+#additionally restrict the data to observation where price is less than 
+# 10 million. I would consider those as outliers
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(price < 15000000)
 
-#additionally restrict the data to observation where grosssqft is less than 20k. I would consider those as outliers
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(grosssqft < 20000)
+#additionally restrict the data to observation where grosssqft is less than 20k. 
+# I would consider those as outliers
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  filter(grosssqft < 20000)
 
 
 #*******************************Step 2: EDA and feature engineering *******************************#
