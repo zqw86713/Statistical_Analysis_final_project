@@ -8,24 +8,34 @@
 install.packages("dplyr")
 install.packages("tidyverse")
 install.packages("ggplot2")
+install.packages('GGally')
+install.packages('Amelia')
+install.packages('Hmisc')
+install.packages('MASS')
+install.packages('faraway')
+install.packages('lmtest')
+install.packages('reshape2')
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
+library(GGally) ##plot correlation
+library(Amelia)
+library(Hmisc)
+library(lmtest)
+library(MASS)
+library(faraway)
+library(reshape2)
 
 setwd('C:\\Prinu\\Personal\\Studies\\Masters\\UChicago\\After Admission\\Courses\\Statistical Analysis\\Assignments\\Final Assignment - Part1\\data')
 
 #*******************************Step 1: Import and prepare the data for analysis*******************************#
+
 
 #1.1 Bring the data into R
 #Using R, bring all five datasets into your workspace.  
 # Notice that all five datasets have 21 columns, 
 #with similar (but not identical) column names.  Please use the following
 # vector of column names to standardize the data.
-
-#c('borough','neighborhood','bldclasscat','taxclasscurr','block','lot',
-# 'easement','bldclasscurr','address',
-#'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft',
-#''yrbuilt','taxclasssale','bldclasssale','price','date') 
 
 brooklyn_2016 <- read.csv('2016_brooklyn.csv')
 brooklyn_2017 <- read.csv('2017_brooklyn.csv')
@@ -42,30 +52,13 @@ brooklyn_2020 <- tail(brooklyn_2020, -7)
 
 #define column names for each dataframes
 colnames <- c(
-  "borough",
-  "neighborhood",
-  "bldclasscat",
-  "taxclasscurr",
-  "block",
-  "lot",
-  "easement",
-  "bldclasscurr",
-  "address",
-  "aptnum",
-  "zip",
-  "resunits",
-  "comunits",
-  "totunits",
-  "landsqft",
-  "grosssqft",
-  "yrbuilt",
-  "taxclasssale",
-  "bldclasssale",
-  "price",
-  "date"
+  "borough","neighborhood","bldclasscat","taxclasscurr",
+  "block","lot","easement","bldclasscurr","address",
+  "aptnum","zip","resunits","comunits","totunits",
+  "landsqft","grosssqft","yrbuilt","taxclasssale",
+  "bldclasssale","price","date"
 )
 
-# set the column names of a matrix-like object.
 colnames(brooklyn_2016) <- colnames
 colnames(brooklyn_2017) <- colnames
 colnames(brooklyn_2018) <- colnames
@@ -94,7 +87,7 @@ rownames(brooklyn_2020) <- 1:nrow(brooklyn_2020)
 #The resulting dataset should have roughly 119,000 rows.
 
 
-#remove empty rows
+#remove empty rowsm
 brooklyn_2016 <- brooklyn_2016[!apply(brooklyn_2016 == "", 1, all),]
 brooklyn_2017 <- brooklyn_2017[!apply(brooklyn_2017 == "", 1, all),]
 brooklyn_2018 <- brooklyn_2018[!apply(brooklyn_2018 == "", 1, all),]
@@ -109,7 +102,8 @@ total_observations <- nrow(brooklyn_2016) +
   nrow(brooklyn_2019) +
   nrow(brooklyn_2020)
 
-#define functions. This one is for trim white space.
+#define functions. 
+#This one is for trim white space.
 func.df.trim <- function(df, colnames) {
   for (colname in colnames) {
     df[[colname]] <- trimws(df[[colname]])
@@ -140,8 +134,8 @@ func.df.ToNum <- function(df, colnames) {
   for (colname in colnames) {
     df[[colname]] <- str_replace_all(df[[colname]], "[^0-9.]", "")
     df[[colname]] <- suppressWarnings(
-        as.numeric(gsub(",", "", format(df[[colname]], scientific = F)))
-      )
+      as.numeric(gsub(",", "", format(df[[colname]], scientific = F)))
+    )
   }
   
   return(df)
@@ -158,30 +152,6 @@ func.df.ToDate <- function(df, colnames, format) {
 }
 
 #trim leading and trailing white spaces for columns
-
-# brooklyn_2016 <- func.df.trim(brooklyn_2016, 
-#                          list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-#                               'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-#                               'bldclasssale','price','date'))
-# 
-# brooklyn_2017 <- func.df.trim(brooklyn_2017, 
-#                               list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-#                                    'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-#                                    'bldclasssale','price','date'))
-# brooklyn_2018 <- func.df.trim(brooklyn_2018, 
-#                               list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-#                                    'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-#                                    'bldclasssale','price','date'))
-# brooklyn_2019 <- func.df.trim(brooklyn_2019, 
-#                               list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-#                                    'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-#                                    'bldclasssale','price','date'))
-# brooklyn_2020 <- func.df.trim(brooklyn_2020, 
-#                               list('borough','neighborhood','bldclasscat','taxclasscurr','block','easement','lot','bldclasscurr','address',
-#                                    'aptnum','zip','resunits','comunits','totunits','landsqft','grosssqft','yrbuilt','taxclasssale',
-#                                    'bldclasssale','price','date'))
-
-
 brooklyn_2016 <- func.df.trim(brooklyn_2016, colnames)
 brooklyn_2017 <- func.df.trim(brooklyn_2017, colnames)
 brooklyn_2018 <- func.df.trim(brooklyn_2018, colnames)
@@ -189,29 +159,7 @@ brooklyn_2019 <- func.df.trim(brooklyn_2019, colnames)
 brooklyn_2020 <- func.df.trim(brooklyn_2020, colnames)
 
 
-
-
-#check if resunits is '-' for totunit= 1 and bldclasssale= starts with A or R and taxclasscurr= starts with 1 or 2
-#brooklyn_2016 %>% filter(str_detect(totunits, "^1") & str_detect(resunits, "^-") & str_detect(comunits, "^-") & 
-#                           price > 0 & (str_detect(bldclasssale, "^A") | str_detect(bldclasssale, "^R")) & 
-#                           (str_detect(taxclasscurr, "^1") | str_detect(taxclasscurr, "^2")))
-
-
-
 #replace column value '-' with empty
-
-
-# brooklyn_2016 <- func.df.replace(brooklyn_2016, 
-#                               list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
-# brooklyn_2017 <- func.df.replace(brooklyn_2017, 
-#                                  list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
-# brooklyn_2018 <- func.df.replace(brooklyn_2018, 
-#                                  list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
-# brooklyn_2019 <- func.df.replace(brooklyn_2019, 
-#                                  list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
-# brooklyn_2020 <- func.df.replace(brooklyn_2020, 
-#                                  list('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale'), '-', '')
-
 columns_with_hyphen = c('borough','resunits','comunits','totunits','landsqft','grosssqft','taxclasssale')
 
 brooklyn_2016 <- func.df.replace(brooklyn_2016, columns_with_hyphen, '-', '')
@@ -219,8 +167,6 @@ brooklyn_2017 <- func.df.replace(brooklyn_2017, columns_with_hyphen, '-', '')
 brooklyn_2018 <- func.df.replace(brooklyn_2018, columns_with_hyphen, '-', '')
 brooklyn_2019 <- func.df.replace(brooklyn_2019, columns_with_hyphen, '-', '')
 brooklyn_2020 <- func.df.replace(brooklyn_2020, columns_with_hyphen, '-', '')
- 
-
 
 #replace column value '0' with empty
 #brooklyn_2016 <- func.df.replace(brooklyn_2016,list('yrbuilt'), '0', '')
@@ -261,7 +207,6 @@ total_observations_after_cleanup <- nrow(brooklyn_2016) +
   nrow(brooklyn_2018) + 
   nrow(brooklyn_2019) +
   nrow(brooklyn_2020)
-
 
 #merge the dataframes
 brooklyn_2016_2020_list <- list(
@@ -306,16 +251,13 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
   filter(yrbuilt > 0)
 
-#additionally restrict the data to observation where price is less than 
-# 10 million. I would consider those as outliers
+#additionally restrict the data to observation where price is less than 10 million. I would consider those as outliers
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
   filter(price < 15000000)
 
-#additionally restrict the data to observation where grosssqft is less than 20k. 
-# I would consider those as outliers
+#additionally restrict the data to observation where grosssqft is less than 20k. I would consider those as outliers
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
   filter(grosssqft < 20000)
-
 
 
 #*******************************Step 2: EDA and feature engineering *******************************#
@@ -332,13 +274,65 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
 #of your predictors, or both.  Use this exploratory data analysis to revisit your initial data cleaning steps, which might need revision. 
 
 
-#2.1.1 - plot and analysis between response and predictor variables
+#2.1.1.1 - Statistics summary
+dim(brooklyn_2016_2020_final)
+summary(brooklyn_2016_2020_final)
+
+
+#2.1.1.2 - Check for any NA’s in the dataframe
+missmap(brooklyn_2016_2020_final,col=c('yellow','black'),y.at=1,y.labels='',legend=TRUE)
+colSums(is.na(brooklyn_2016_2020_final))
+
+
+#2.1.1.3 - Data Cleansing — Handle missing data
+brooklyn_2016_2020_final[["taxclasscurr"]][str_detect(brooklyn_2016_2020_final[["bldclasssale"]], "^A") & is.na(brooklyn_2016_2020_final[["taxclasscurr"]])] <- 1
+brooklyn_2016_2020_final[["taxclasscurr"]][str_detect(brooklyn_2016_2020_final[["bldclasssale"]], "^R") & is.na(brooklyn_2016_2020_final[["taxclasscurr"]])] <- 2
+brooklyn_2016_2020_final[["comunits"]][is.na(brooklyn_2016_2020_final[["comunits"]])] <- 0
+
+
+#2.1.1.4 - Correlations
+#A positive correlation indicates the extent to which those variables increase or decrease in parallel; 
+#a negative correlation indicates the extent to which one variable increases as the other decreases.
+ggcorr(brooklyn_2016_2020_final, label = T, hjust = 1, layout.exp = 3)
+
+
+
+#The correlation between each independent variable with the target variable must not be weak. 
+#However, the correlation between two independent variables must not be too strong. Multicollinearity occurs 
+#when independent variables in a regression model are correlated. This correlation is a problem because 
+#independent variables should be independent. If the degree of correlation between variables is high enough, 
+#it can cause problems when you fit the model and interpret the results.
+
+#By looking at the correlation coefficient of the independent variables 'taxclasscurr', 'taxclasssale'
+#'landsqft', 'lot' with the target variable 'price' (0.1, 0.1, 0.1, 0.1 respectively) are weak correlations, 
+#'therefore we can exclude these two independent variable from our model.
+
+
+#2.1.1.5 - plot and analysis between response and predictor variables
 plot(price ~ grosssqft, data = brooklyn_2016_2020_final, xlab = "Gross Sqft", ylab = "Price", pch = 20, cex = 2)
 plot(price ~ zip, data = brooklyn_2016_2020_final, xlab = "Zip", ylab = "Price", pch = 20, cex = 2)
 plot(price ~ yrbuilt, data = brooklyn_2016_2020_final, xlab = "Year Built", ylab = "Price", pch = 20, cex = 2)
 
 
-#2.1.2 - Neighborhood consolidation
+#2.1.1.6 - visualizing the distribution of the target variable 'price'
+brooklyn_2016_2020_final %>% 
+  ggplot(aes(price)) +
+  stat_density() + 
+  theme_bw()
+
+
+#2.1.1.7 - effect of the variables on target variable 'price'
+brooklyn_2016_2020_final %>%
+  dplyr::select(c(price,zip,block,grosssqft,yrbuilt,bldclasssale)) %>%
+  melt(id.vars = "price") %>%
+  ggplot(aes(x = value, y = price, colour = variable)) +
+  geom_point(alpha = 0.7) +
+  stat_smooth(aes(colour = "black")) +
+  facet_wrap(~variable, scales = "free", ncol = 2) +
+  labs(x = "Variable Value", y = "Price ($1000s)") +
+  theme_minimal()
+
+#2.1.2.1 - Neighborhood consolidation
 #https://www.unitedstateszipcodes.org/11223/
 #unique((brooklyn_2016_2020_final %>% filter(str_detect(neighborhood, "FLATBUSH-CENTRAL")))$zip)
 #unique((brooklyn_2016_2020_final %>% filter(str_detect(zip, "11234")))$neighborhood)
@@ -422,13 +416,14 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price > 0 & !is.
 #2.1.3.2 - Additionally restrict the data to observation where zip is greater than 0
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(zip > 0)
 
-#2.1.4 - check the model summary without any transformation
+
+#2.1.4.1 - check the model summary without any transformation
 brooklyn_2016_2020_final.lm.native <- lm(formula = price~
                                            factor(bldclasssale)+
-                                           factor(neighborhood)+
                                            factor(zip)+
-                                           grosssqft+landsqft+
-                                           yrbuilt+taxclasssale,
+                                           grosssqft+
+                                           block+
+                                           yrbuilt,
                                          brooklyn_2016_2020_final)
 brooklyn_2016_2020_final.lm.native.summary <- summary(brooklyn_2016_2020_final.lm.native)
 brooklyn_2016_2020_final.lm.native.summary
@@ -441,6 +436,19 @@ brooklyn_2016_2020_final.lm.native.summary.metric <- data.frame(
 
 RMSE_native_model <- sqrt(mean(brooklyn_2016_2020_final.lm.native.summary$residuals^2))
 sprintf("Root Mean Square Error(RMSE) for Native Model : %s", round(RMSE_native_model, digits = 4))
+
+
+#2.1.4.2 - fitted versus residuals plot
+plot(fitted(brooklyn_2016_2020_final.lm.native), resid(brooklyn_2016_2020_final.lm.native), col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
+#it still seems very clear that the constant variance assumption is violated.
+
+#2.1.4.3 - Diagnostic plots with multiple predictors before transformation
+layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
+plot(brooklyn_2016_2020_final.lm.native)
+
 
 
 #2.2 Pre-modeling and feature engineering
@@ -457,80 +465,102 @@ sprintf("Root Mean Square Error(RMSE) for Native Model : %s", round(RMSE_native_
 #2.2.1 - find the average price of each neighborhood and assign that price to price having 0 for those matching neighborhood
 unique_neighborhoods <- as.list(unique(brooklyn_2016_2020_final$neighborhood))
 
-func.df.adjPrice <- function(df, neighborhoods) {
-  colname_price = 'price'
-  colname_neighborhood = 'neighborhood'
-  for (item in neighborhoods) {
-    df_price_temp <- df %>% filter(price > 0 & neighborhood == item)
-    df[[colname_price]][df[[colname_price]] == 0 & df[[colname_neighborhood]] == item] <- floor(mean(df_price_temp$price))
-  }
-  
-  return(df)
-}
-#brooklyn_2016_2020_final <- func.df.adjPrice(brooklyn_2016_2020_final, unique_neighborhoods)
-
-
 #2.2.2 - extract year from sale date
 brooklyn_2016_2020_final$yrsold <- format(brooklyn_2016_2020_final$date,"%Y")
 brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('yrsold'))
 
+
 #2.2.3 - adding decade as new column. Also as the year build increases the house price decreases
 brooklyn_2016_2020_final$decade <- 10*floor(brooklyn_2016_2020_final$yrbuilt/10)
-brooklyn_2016_2020_final$decade[brooklyn_2016_2020_final$decade<1950] <- 1950
+brooklyn_2016_2020_final$decade[brooklyn_2016_2020_final$decade<1970] <- 1970
 #aggregate(data = brooklyn_2016_2020_final, yrbuilt ~ decade, function(x) length(unique(x)))
+
 
 #2.2.4.1 - group all "A5" "A1" "A9" "A4" "A3" "A2" "A0" "A7" "A6" to "A"
 #2.2.4.2 - group all "R3" "R2" "R4" "R1" "R6" "RR" to "R"
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
   mutate(bldclasssalecategory = case_when(
-    str_detect(bldclasssale, "^A")  ~ "A",
-    str_detect(bldclasssale, "^R")  ~ "R"
+    str_detect(bldclasssale, "^A")  ~ "0",
+    str_detect(bldclasssale, "^R")  ~ "1"
   ))
+brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('bldclasssalecategory'))
+
+
+#2.2.5.1 - box-cox transformations for strictly positive response variable
+boxcox <- boxcox(brooklyn_2016_2020_final.lm.native, lambda = seq(-0.25, 0.75, by = 0.05), plotit = TRUE)
+
+#find optimal lambda for Box-Cox transformation 
+optimal_lambda_boxcox <- boxcox$x[which.max(boxcox$y)]
+
+#Using the Box-Cox method, we see that λ=0.4974 is both in the confidence interval, and is extremely close to the maximum, 
+#which suggests a transformation of the form
+
+##(y^λ − 1)/λ = (y^0.4974 − 1)/0.4974
+brooklyn_2016_2020_final$boxcoxprice <- ((brooklyn_2016_2020_final$price^optimal_lambda_boxcox - 1) / optimal_lambda_boxcox)
+
 
 #log transformations of response
 brooklyn_2016_2020_final$logprice <- log(brooklyn_2016_2020_final$price)
-#brooklyn_2016_2020_final$logadjprice <- log(brooklyn_2016_2020_final$adjprice)
 
 #log transformations of predictors
 brooklyn_2016_2020_final$logage <- log(brooklyn_2016_2020_final$yrsold-brooklyn_2016_2020_final$yrbuilt+0.1)
-brooklyn_2016_2020_final$loggrosssqft <- log(brooklyn_2016_2020_final$grosssqft)
+
 
 #functions of two different variables transformations of predictor variables
 brooklyn_2016_2020_final$totsqft <- brooklyn_2016_2020_final$landsqft + brooklyn_2016_2020_final$grosssqft
 
 
-#2.2.5 - plot and analysis between response and predictor variables
+#2.2.6.1 - plot and analysis between response and predictor variables
 plot(price ~ grosssqft, data = brooklyn_2016_2020_final, xlab = "Gross Sqft", ylab = "Adj Price", pch = 20, cex = 2)
 plot(price ~ zip, data = brooklyn_2016_2020_final, xlab = "Zip", ylab = "Adj Price", pch = 20, cex = 2)
 plot(price ~ yrbuilt, data = brooklyn_2016_2020_final, xlab = "Year Built", ylab = "Adj Price", pch = 20, cex = 2)
 plot(price ~ decade, data = brooklyn_2016_2020_final, xlab = "Decade", ylab = "Adj Price", pch = 20, cex = 2)
 
 
-#check the model summary after transformations
+#2.2.7.1 - check the model summary after transformations
 brooklyn_2016_2020_final.lm.transform <- lm(formula = price~
                                               factor(bldclasssalecategory)+
-                                              factor(neighborhood)+
-                                              grosssqft+sqrt(grosssqft)+
+                                              factor(zip)+
+                                              grosssqft+
                                               factor(decade)+
                                               yrbuilt+
-                                              logage+
-                                              taxclasssale,
+                                              block+
+                                              logage,
                                             brooklyn_2016_2020_final)
 brooklyn_2016_2020_final.lm.transform.summary <- summary(brooklyn_2016_2020_final.lm.transform)
 brooklyn_2016_2020_final.lm.transform.summary
 
+
+#2.2.7.2 - fitted versus residuals plot
+
+#2.2.8.1 - Test IID assumptions
+
+#Kolmogorov-Smirnov test for normality
+hist(brooklyn_2016_2020_final.lm.transform$residuals)
+ks.test(brooklyn_2016_2020_final.lm.transform$residuals/summary(brooklyn_2016_2020_final.lm.transform)$sigma, pnorm)
+
+#Breusch-Pagan test for normality heteroscedasticity
+plot(brooklyn_2016_2020_final.lm.transform$fitted.values,brooklyn_2016_2020_final.lm.transform$residuals, col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
+#it still seems very clear that the constant variance assumption is minimized but it's still violated.
+
+bptest(brooklyn_2016_2020_final.lm.transform)
+
+
+
 #TESTING
 brooklyn_2016_2020_final.lm.transform <- lm(formula = price~
-                                              factor(bldclasssalecategory)+
                                               factor(zip)+
-                                              grosssqft+sqrt(grosssqft)+
+                                              grosssqft+
                                               factor(decade)+
                                               yrbuilt+
-                                              logage+
-                                              taxclasssale,
+                                              logage,
                                             brooklyn_2016_2020_final)
 brooklyn_2016_2020_final.lm.transform.summary <- summary(brooklyn_2016_2020_final.lm.transform)
 brooklyn_2016_2020_final.lm.transform.summary
+
 
 #get metrics from transformed model summary
 brooklyn_2016_2020_final.lm.transform.summary.metric <- data.frame(
@@ -540,4 +570,3 @@ brooklyn_2016_2020_final.lm.transform.summary.metric <- data.frame(
 
 RMSE_transform_model <- sqrt(mean(brooklyn_2016_2020_final.lm.transform.summary$residuals^2))
 sprintf("Root Mean Square Error(RMSE) for Transform Model : %s", round(RMSE_transform_model, digits = 4))
-
