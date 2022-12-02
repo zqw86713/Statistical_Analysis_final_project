@@ -87,7 +87,7 @@ rownames(brooklyn_2020) <- 1:nrow(brooklyn_2020)
 #The resulting dataset should have roughly 119,000 rows.
 
 
-#remove empty rowsm
+#remove empty rows
 brooklyn_2016 <- brooklyn_2016[!apply(brooklyn_2016 == "", 1, all),]
 brooklyn_2017 <- brooklyn_2017[!apply(brooklyn_2017 == "", 1, all),]
 brooklyn_2018 <- brooklyn_2018[!apply(brooklyn_2018 == "", 1, all),]
@@ -167,13 +167,6 @@ brooklyn_2017 <- func.df.replace(brooklyn_2017, columns_with_hyphen, '-', '')
 brooklyn_2018 <- func.df.replace(brooklyn_2018, columns_with_hyphen, '-', '')
 brooklyn_2019 <- func.df.replace(brooklyn_2019, columns_with_hyphen, '-', '')
 brooklyn_2020 <- func.df.replace(brooklyn_2020, columns_with_hyphen, '-', '')
-
-#replace column value '0' with empty
-#brooklyn_2016 <- func.df.replace(brooklyn_2016,list('yrbuilt'), '0', '')
-#brooklyn_2017 <- func.df.replace(brooklyn_2017,list('yrbuilt'), '0', '')
-#brooklyn_2018 <- func.df.replace(brooklyn_2018,list('yrbuilt'), '0', '')
-#brooklyn_2019 <- func.df.replace(brooklyn_2019,list('yrbuilt'), '0', '')
-#brooklyn_2020 <- func.df.replace(brooklyn_2020,list('yrbuilt'), '0', '')
 
 #change data types for following columns
 brooklyn_2016 <- func.df.ToInt(brooklyn_2016,list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale','zip'))
@@ -308,22 +301,16 @@ ggcorr(brooklyn_2016_2020_final, label = T, hjust = 1, layout.exp = 3)
 #'therefore we can exclude these two independent variable from our model.
 
 
-#2.1.1.5 - plot and analysis between response and predictor variables
-plot(price ~ grosssqft, data = brooklyn_2016_2020_final, xlab = "Gross Sqft", ylab = "Price", pch = 20, cex = 2)
-plot(price ~ zip, data = brooklyn_2016_2020_final, xlab = "Zip", ylab = "Price", pch = 20, cex = 2)
-plot(price ~ yrbuilt, data = brooklyn_2016_2020_final, xlab = "Year Built", ylab = "Price", pch = 20, cex = 2)
-
-
-#2.1.1.6 - visualizing the distribution of the target variable 'price'
+#2.1.1.5 - visualizing the distribution of the target variable 'price'
 brooklyn_2016_2020_final %>% 
   ggplot(aes(price)) +
   stat_density() + 
   theme_bw()
 
 
-#2.1.1.7 - effect of the variables on target variable 'price'
+#2.1.1.6 - effect of the predictor variables on target variable 'price'
 brooklyn_2016_2020_final %>%
-  dplyr::select(c(price,zip,block,grosssqft,yrbuilt,bldclasssale)) %>%
+  dplyr::select(c(price,zip,neighborhood,block,grosssqft,landsqft,yrbuilt,bldclasssale,taxclasssale)) %>%
   melt(id.vars = "price") %>%
   ggplot(aes(x = value, y = price, colour = variable)) +
   geom_point(alpha = 0.7) +
@@ -417,6 +404,41 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price > 0 & !is.
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(zip > 0)
 
 
+#2.1.3.3 - visualizing the distribution of the target variable 'price'
+brooklyn_2016_2020_final %>% 
+  ggplot(aes(price)) +
+  stat_density() + 
+  theme_bw()
+
+#2.1.3.4 - Create a histogram of housing prices
+ggplot(data=brooklyn_2016_2020_final) + geom_histogram(mapping = aes(price))
+ggplot(data=brooklyn_2016_2020_final) +                         
+  geom_histogram(mapping = aes(price/100000), 
+                 breaks=seq(0, 7, by = 1), col="red", fill="lightblue") + 
+  geom_density(mapping = aes(x=price/100000, y = (..count..)))  +   
+  labs(title="Housing Prices in Brooklyn, NY (in $100,000)", 
+       x="Sale Price of Individual Homes/Condos")   
+
+ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=grosssqft, y=price))
+ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=log(grosssqft), y=price))
+ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=yrbuilt, y=price))
+ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=bldclasssale))
+ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=zip))
+ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=block))
+ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=neighborhood))
+
+#2.1.3.5 - effect of the predictor variables on target variable 'price'
+brooklyn_2016_2020_final %>%
+  dplyr::select(c(price,zip,neighborhood,block,grosssqft,landsqft,yrbuilt,bldclasssale,taxclasssale)) %>%
+  melt(id.vars = "price") %>%
+  ggplot(aes(x = value, y = price, colour = variable)) +
+  geom_point(alpha = 0.7) +
+  stat_smooth(aes(colour = "black")) +
+  facet_wrap(~variable, scales = "free", ncol = 2) +
+  labs(x = "Variable Value", y = "Price ($1000s)") +
+  theme_minimal()
+
+
 #2.1.4.1 - check the model summary without any transformation
 brooklyn_2016_2020_final.lm.native <- lm(formula = price~
                                            factor(bldclasssale)+
@@ -457,23 +479,33 @@ plot(brooklyn_2016_2020_final.lm.native)
 #freedom, your adjusted R^2, and your RMSE (root means square error).  Also consider whether your models show severe violations 
 #of the OLS model assumptions, or merely slight violations of the OLS model assumptions.
 
-#brooklyn_2016_2020_final.lm <- lm(logprice~resunits+totunits+grosssqft+sqrt(grosssqft)+landsqft+sqrt(landsqft)+factor(decade)+logage,brooklyn_2016_2020_final)
-
-
 #feature engineering
 
 #2.2.1 - find the average price of each neighborhood and assign that price to price having 0 for those matching neighborhood
 unique_neighborhoods <- as.list(unique(brooklyn_2016_2020_final$neighborhood))
+unique_zip <- as.list(unique(brooklyn_2016_2020_final$zip))
+
 
 #2.2.2 - extract year from sale date
 brooklyn_2016_2020_final$yrsold <- format(brooklyn_2016_2020_final$date,"%Y")
 brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('yrsold'))
 
 
-#2.2.3 - adding decade as new column. Also as the year build increases the house price decreases
+#2.2.3.1 - adding decade as new column. Also as the year build increases the house price decreases
 brooklyn_2016_2020_final$decade <- 10*floor(brooklyn_2016_2020_final$yrbuilt/10)
 brooklyn_2016_2020_final$decade[brooklyn_2016_2020_final$decade<1970] <- 1970
-#aggregate(data = brooklyn_2016_2020_final, yrbuilt ~ decade, function(x) length(unique(x)))
+
+
+#2.2.3.2
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
+  mutate(yrbuiltbycategory = case_when(
+    yrbuilt <= 1900  ~ 0,
+    yrbuilt > 1900 & yrbuilt <= 1940  ~ 1,
+    yrbuilt > 1940 & yrbuilt <= 1970  ~ 2,
+    yrbuilt > 1970 & yrbuilt <= 2000  ~ 3,
+    yrbuilt > 2000  ~ 3
+  ))
+brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('yrbuiltbycategory'))
 
 
 #2.2.4.1 - group all "A5" "A1" "A9" "A4" "A3" "A2" "A0" "A7" "A6" to "A"
@@ -499,9 +531,6 @@ optimal_lambda_boxcox <- boxcox$x[which.max(boxcox$y)]
 brooklyn_2016_2020_final$boxcoxprice <- ((brooklyn_2016_2020_final$price^optimal_lambda_boxcox - 1) / optimal_lambda_boxcox)
 
 
-#log transformations of response
-brooklyn_2016_2020_final$logprice <- log(brooklyn_2016_2020_final$price)
-
 #log transformations of predictors
 brooklyn_2016_2020_final$logage <- log(brooklyn_2016_2020_final$yrsold-brooklyn_2016_2020_final$yrbuilt+0.1)
 
@@ -510,20 +539,13 @@ brooklyn_2016_2020_final$logage <- log(brooklyn_2016_2020_final$yrsold-brooklyn_
 brooklyn_2016_2020_final$totsqft <- brooklyn_2016_2020_final$landsqft + brooklyn_2016_2020_final$grosssqft
 
 
-#2.2.6.1 - plot and analysis between response and predictor variables
-plot(price ~ grosssqft, data = brooklyn_2016_2020_final, xlab = "Gross Sqft", ylab = "Adj Price", pch = 20, cex = 2)
-plot(price ~ zip, data = brooklyn_2016_2020_final, xlab = "Zip", ylab = "Adj Price", pch = 20, cex = 2)
-plot(price ~ yrbuilt, data = brooklyn_2016_2020_final, xlab = "Year Built", ylab = "Adj Price", pch = 20, cex = 2)
-plot(price ~ decade, data = brooklyn_2016_2020_final, xlab = "Decade", ylab = "Adj Price", pch = 20, cex = 2)
-
-
-#2.2.7.1 - check the model summary after transformations
+#2.2.6.1 - check the model summary after transformations
 brooklyn_2016_2020_final.lm.transform <- lm(formula = price~
                                               factor(bldclasssalecategory)+
                                               factor(zip)+
                                               grosssqft+
                                               factor(decade)+
-                                              yrbuilt+
+                                              factor(yrbuiltbycategory)+
                                               block+
                                               logage,
                                             brooklyn_2016_2020_final)
@@ -531,7 +553,11 @@ brooklyn_2016_2020_final.lm.transform.summary <- summary(brooklyn_2016_2020_fina
 brooklyn_2016_2020_final.lm.transform.summary
 
 
-#2.2.7.2 - fitted versus residuals plot
+#2.2.6.2 - fitted versus residuals plot
+plot(fitted(brooklyn_2016_2020_final.lm.transform), resid(brooklyn_2016_2020_final.lm.transform), col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
 
 #2.2.8.1 - Test IID assumptions
 
@@ -547,26 +573,3 @@ abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
 #it still seems very clear that the constant variance assumption is minimized but it's still violated.
 
 bptest(brooklyn_2016_2020_final.lm.transform)
-
-
-
-#TESTING
-brooklyn_2016_2020_final.lm.transform <- lm(formula = price~
-                                              factor(zip)+
-                                              grosssqft+
-                                              factor(decade)+
-                                              yrbuilt+
-                                              logage,
-                                            brooklyn_2016_2020_final)
-brooklyn_2016_2020_final.lm.transform.summary <- summary(brooklyn_2016_2020_final.lm.transform)
-brooklyn_2016_2020_final.lm.transform.summary
-
-
-#get metrics from transformed model summary
-brooklyn_2016_2020_final.lm.transform.summary.metric <- data.frame(
-  R2 = brooklyn_2016_2020_final.lm.transform.summary$r.squared,
-  Adj.R2 = brooklyn_2016_2020_final.lm.transform.summary$adj.r.squared
-)
-
-RMSE_transform_model <- sqrt(mean(brooklyn_2016_2020_final.lm.transform.summary$residuals^2))
-sprintf("Root Mean Square Error(RMSE) for Transform Model : %s", round(RMSE_transform_model, digits = 4))
