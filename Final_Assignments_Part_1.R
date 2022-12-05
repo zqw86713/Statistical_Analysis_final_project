@@ -15,6 +15,8 @@ install.packages('MASS')
 install.packages('faraway')
 install.packages('lmtest')
 install.packages('reshape2')
+install.packages("LambertW")
+library(LambertW)
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
@@ -244,11 +246,11 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
   filter(yrbuilt > 0)
 
-#additionally restrict the data to observation where price is less than 10 million. I would consider those as outliers
+#additionally restrict the data to observation where price is less than 100 million. Anything outside of that, I would consider those as outliers
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
-  filter(price < 15000000)
+  filter(price <= 10000000)
 
-#additionally restrict the data to observation where grosssqft is less than 20k. I would consider those as outliers
+#additionally restrict the data to observation where grosssqft is less than 20k. Anything outside of that, I would consider those as outliers
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
   filter(grosssqft < 20000)
 
@@ -460,18 +462,35 @@ RMSE_native_model <- sqrt(mean(brooklyn_2016_2020_final.lm.native.summary$residu
 sprintf("Root Mean Square Error(RMSE) for Native Model : %s", round(RMSE_native_model, digits = 4))
 
 
-#2.1.4.2 - fitted versus residuals plot
-plot(fitted(brooklyn_2016_2020_final.lm.native), resid(brooklyn_2016_2020_final.lm.native), col = "dodgerblue",
-     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
-abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
-
-#it still seems very clear that the constant variance assumption is violated.
-
-#2.1.4.3 - Diagnostic plots with multiple predictors before transformation
+#2.1.4.2 - Diagnostic plots with multiple predictors before transformation
 layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
 plot(brooklyn_2016_2020_final.lm.native)
 
 
+#2.1.5.3 - Test IID assumptions
+
+#Kolmogorov-Smirnov test for normality
+hist(brooklyn_2016_2020_final.lm.native$residuals)
+ks.test(brooklyn_2016_2020_final.lm.native$residuals/summary(brooklyn_2016_2020_final.lm.native)$sigma, pnorm)
+
+#Breusch-Pagan test for normality heteroscedasticity
+#The Breusch-Pagan test is used to determine whether or not heteroscedasticity is present in a regression model.
+
+#The test uses the following null and alternative hypotheses:
+
+#Null Hypothesis (H0): Homoscedasticity is present (the residuals are distributed with equal variance)
+#Alternative Hypothesis (HA): Heteroscedasticity is present (the residuals are not distributed with equal variance)
+
+#If the p-value of the test is less than some significance level (i.e. α = .05) then we reject the null hypothesis 
+#and conclude that heteroscedasticity is present in the regression model.
+bptest(brooklyn_2016_2020_final.lm.native)
+
+#If the residuals become more spread out at higher values in the plot, this is a tell-tale sign that heteroscedasticity is present.
+plot(brooklyn_2016_2020_final.lm.native$fitted.values, brooklyn_2016_2020_final.lm.native$residuals, col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
+#it still seems very clear that the constant variance assumption is violated.
 
 #2.2 Pre-modeling and feature engineering
 
@@ -481,12 +500,68 @@ plot(brooklyn_2016_2020_final.lm.native)
 
 #feature engineering
 
-#2.2.1 - find the average price of each neighborhood and assign that price to price having 0 for those matching neighborhood
+#2.2.1.1 - find the average price of each neighborhood and assign that price to price having 0 for those matching neighborhood
 unique_neighborhoods <- as.list(unique(brooklyn_2016_2020_final$neighborhood))
-unique_zip <- as.list(unique(brooklyn_2016_2020_final$zip))
+unique_zips <- as.list(unique(brooklyn_2016_2020_final$zip))
 
 
-#2.2.2 - extract year from sale date
+#2.2.1.2 - Remove duplicates based on columns (neighborhood,bldclasscat,block,zip,resunits,totunits,landsqft,grosssqft,yrbuilt,bldclasssale,price)
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final[!duplicated(brooklyn_2016_2020_final, 
+                                                                      by=c('neighborhood','bldclasscat','block',
+                                                                           'zip','resunits','totunits','landsqft',
+                                                                           'grosssqft','yrbuilt','bldclasssale',
+                                                                           'price')), ]
+
+
+#2.2.1.3 - find duplicate rows with same values for column (neighborhood,bldclasscat,block,zip,resunits,totunits,landsqft,grosssqft,yrbuilt,bldclasssale)
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  group_by(neighborhood,address,bldclasscat,block,zip,resunits,totunits,landsqft,grosssqft,yrbuilt,bldclasssale) %>% 
+  mutate(duplicate_row = case_when(
+    n()>1  ~ 1,
+    TRUE  ~ 0
+  ))
+brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('duplicate_row'))
+
+
+#2.2.1.4 - find the average price of each neighborhood and assign that price to rows that has the price between 1 and 3000 for those matching neighborhood
+func.df.adjPrice <- function(df, neighborhoods, zips) {
+  df$adjprice = df$price
+  colname_price = 'adjprice'
+  colname_neighborhood = 'neighborhood'
+  colname_zip = 'zip'
+  for (item_neighborhood in neighborhoods) {
+      df_price_temp <- df %>% filter(price > 3000 & neighborhood == item_neighborhood)
+      if(nrow(df_price_temp) > 0){
+        df[[colname_price]][df[[colname_price]] > 0 & 
+                            df[[colname_price]] <= 3000 & 
+                            df[[colname_neighborhood]] == item_neighborhood] <- floor(mean(df_price_temp$price))
+        break
+      }
+  }
+  
+  return(df)
+}
+brooklyn_2016_2020_final <- func.df.adjPrice(brooklyn_2016_2020_final, unique_neighborhoods, unique_zips)
+
+
+#2.2.1.5 - find the average price of each neighborhood and assign that price to those rows with duplicate_row = 1 and matching neighborhood
+func.df.adjPrice.duplicate <- function(df, neighborhoods) {
+  df$adjprice = df$price
+  colname_price = 'adjprice'
+  colname_duplicate_row = 'duplicate_row'
+  colname_neighborhood = 'neighborhood'
+  for (item in neighborhoods) {
+    df_price_temp <- df %>% filter(duplicate_row == 1 & neighborhood == item)
+    print(floor(max(df_price_temp$price)))
+    #df[[colname_price]][df[[colname_duplicate_row]] == 1 & df[[colname_neighborhood]] == item] <- floor(max(df_price_temp$price))
+  }
+  
+  return(df)
+}
+brooklyn_2016_2020_final <- func.df.adjPrice.duplicate(brooklyn_2016_2020_final, unique_neighborhoods)
+
+
+#2.2.2.1 - extract year from sale date
 brooklyn_2016_2020_final$yrsold <- format(brooklyn_2016_2020_final$date,"%Y")
 brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('yrsold'))
 
@@ -496,13 +571,12 @@ brooklyn_2016_2020_final$decade <- 10*floor(brooklyn_2016_2020_final$yrbuilt/10)
 brooklyn_2016_2020_final$decade[brooklyn_2016_2020_final$decade<1970] <- 1970
 
 
-#2.2.3.2
+#2.2.3.2 - adding yrbuiltbycategory by dividing the year built
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
   mutate(yrbuiltbycategory = case_when(
     yrbuilt <= 1900  ~ 0,
-    yrbuilt > 1900 & yrbuilt <= 1940  ~ 1,
-    yrbuilt > 1940 & yrbuilt <= 1970  ~ 2,
-    yrbuilt > 1970 & yrbuilt <= 2000  ~ 3,
+    yrbuilt > 1900 & yrbuilt <= 1970  ~ 1,
+    yrbuilt > 1970 & yrbuilt <= 2000  ~ 2,
     yrbuilt > 2000  ~ 3
   ))
 brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('yrbuiltbycategory'))
@@ -518,29 +592,12 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
 brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('bldclasssalecategory'))
 
 
-#2.2.5.1 - box-cox transformations for strictly positive response variable
-boxcox <- boxcox(brooklyn_2016_2020_final.lm.native, lambda = seq(-0.25, 0.75, by = 0.05), plotit = TRUE)
-
-#find optimal lambda for Box-Cox transformation 
-optimal_lambda_boxcox <- boxcox$x[which.max(boxcox$y)]
-
-#Using the Box-Cox method, we see that λ=0.4974 is both in the confidence interval, and is extremely close to the maximum, 
-#which suggests a transformation of the form
-
-##(y^λ − 1)/λ = (y^0.4974 − 1)/0.4974
-brooklyn_2016_2020_final$boxcoxprice <- ((brooklyn_2016_2020_final$price^optimal_lambda_boxcox - 1) / optimal_lambda_boxcox)
-
-
-#log transformations of predictors
+#2.2.5.1 - log transformations of predictors
 brooklyn_2016_2020_final$logage <- log(brooklyn_2016_2020_final$yrsold-brooklyn_2016_2020_final$yrbuilt+0.1)
 
 
-#functions of two different variables transformations of predictor variables
-brooklyn_2016_2020_final$totsqft <- brooklyn_2016_2020_final$landsqft + brooklyn_2016_2020_final$grosssqft
-
-
-#2.2.6.1 - check the model summary after transformations
-brooklyn_2016_2020_final.lm.transform <- lm(formula = price~
+#2.2.5.2 - check the model summary after transformations
+brooklyn_2016_2020_final.lm.transform.v1 <- lm(formula = adjprice~
                                               factor(bldclasssalecategory)+
                                               factor(zip)+
                                               grosssqft+
@@ -549,27 +606,193 @@ brooklyn_2016_2020_final.lm.transform <- lm(formula = price~
                                               block+
                                               logage,
                                             brooklyn_2016_2020_final)
-brooklyn_2016_2020_final.lm.transform.summary <- summary(brooklyn_2016_2020_final.lm.transform)
-brooklyn_2016_2020_final.lm.transform.summary
+brooklyn_2016_2020_final.lm.transform.v1.summary <- summary(brooklyn_2016_2020_final.lm.transform.v1)
+brooklyn_2016_2020_final.lm.transform.v1.summary
 
 
-#2.2.6.2 - fitted versus residuals plot
-plot(fitted(brooklyn_2016_2020_final.lm.transform), resid(brooklyn_2016_2020_final.lm.transform), col = "dodgerblue",
-     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
-abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+#2.2.5.3 - Diagnostic plots with multiple predictors before transformation
+layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
+plot(brooklyn_2016_2020_final.lm.transform.v1)
 
-
-#2.2.8.1 - Test IID assumptions
+#2.2.5.4 - Test IID assumptions
 
 #Kolmogorov-Smirnov test for normality
-hist(brooklyn_2016_2020_final.lm.transform$residuals)
-ks.test(brooklyn_2016_2020_final.lm.transform$residuals/summary(brooklyn_2016_2020_final.lm.transform)$sigma, pnorm)
+hist(brooklyn_2016_2020_final.lm.transform.v1$residuals)
+ks.test(brooklyn_2016_2020_final.lm.transform.v1$residuals/summary(brooklyn_2016_2020_final.lm.transform.v1)$sigma, pnorm)
 
 #Breusch-Pagan test for normality heteroscedasticity
-plot(brooklyn_2016_2020_final.lm.transform$fitted.values,brooklyn_2016_2020_final.lm.transform$residuals, col = "dodgerblue",
+#The Breusch-Pagan test is used to determine whether or not heteroscedasticity is present in a regression model.
+
+#The test uses the following null and alternative hypotheses:
+
+#Null Hypothesis (H0): Homoscedasticity is present (the residuals are distributed with equal variance)
+#Alternative Hypothesis (HA): Heteroscedasticity is present (the residuals are not distributed with equal variance)
+
+#If the p-value of the test is less than some significance level (i.e. α = .05) then we reject the null hypothesis 
+#and conclude that heteroscedasticity is present in the regression model.
+bptest(brooklyn_2016_2020_final.lm.transform.v1)
+
+#If the residuals become more spread out at higher values in the plot, this is a tell-tale sign that heteroscedasticity is present.
+plot(fitted(brooklyn_2016_2020_final.lm.transform.v1), resid(brooklyn_2016_2020_final.lm.transform.v1), col = "dodgerblue",
      pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
 abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
 
-#it still seems very clear that the constant variance assumption is minimized but it's still violated.
 
-bptest(brooklyn_2016_2020_final.lm.transform)
+#2.2.5.5 - a scale-location plot
+ggplot(brooklyn_2016_2020_final.lm.transform.v1, aes(x=.fitted, y=sqrt(abs(.stdresid)))) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  geom_smooth() +
+  ggtitle("Scale-Location plot : Standardized Residual vs Fitted values")
+
+#2.2.5.6 - normal QQ plot
+ggplot(brooklyn_2016_2020_final, aes(sample=brooklyn_2016_2020_final.lm.transform.v1$residuals)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = "QQ Plot of BC Model")
+
+
+
+#2.2.6.1 - Let's identify significance level from interaction between variables
+summary(lm(formula = adjprice~
+             (factor(bldclasssalecategory)+
+                factor(zip)+
+                factor(yrbuiltbycategory)+
+                factor(decade)+
+                grosssqft+
+                landsqft+  
+                block+
+                lot+
+                logage+
+                yrbuilt+
+                factor(taxclasssale))^2,
+           brooklyn_2016_2020_final))
+
+
+#2.2.6.2 - New version of model by adding interaction terms from step 2.2.6.1
+brooklyn_2016_2020_final.lm.transform.v2 <- lm(formula = adjprice~
+                                              factor(bldclasssalecategory)*grosssqft+
+                                              factor(bldclasssalecategory)*landsqft+
+                                              factor(zip)+
+                                              logage,
+                                            brooklyn_2016_2020_final)
+brooklyn_2016_2020_final.lm.transform.v2.summary <- summary(brooklyn_2016_2020_final.lm.transform.v2)
+brooklyn_2016_2020_final.lm.transform.v2.summary
+
+
+#2.2.6.3 - Diagnostic plots with multiple predictors before transformation
+layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
+plot(brooklyn_2016_2020_final.lm.transform.v2)
+
+#2.2.6.4 - Test IID assumptions
+
+#Kolmogorov-Smirnov test for normality
+hist(brooklyn_2016_2020_final.lm.transform.v2$residuals)
+ks.test(brooklyn_2016_2020_final.lm.transform.v2$residuals/summary(brooklyn_2016_2020_final.lm.transform.v2)$sigma, pnorm)
+
+#Breusch-Pagan test for normality heteroscedasticity
+#The Breusch-Pagan test is used to determine whether or not heteroscedasticity is present in a regression model.
+
+#The test uses the following null and alternative hypotheses:
+
+#Null Hypothesis (H0): Homoscedasticity is present (the residuals are distributed with equal variance)
+#Alternative Hypothesis (HA): Heteroscedasticity is present (the residuals are not distributed with equal variance)
+
+#If the p-value of the test is less than some significance level (i.e. α = .05) then we reject the null hypothesis 
+#and conclude that heteroscedasticity is present in the regression model.
+bptest(brooklyn_2016_2020_final.lm.transform.v2)
+
+#If the residuals become more spread out at higher values in the plot, this is a tell-tale sign that heteroscedasticity is present.
+plot(brooklyn_2016_2020_final.lm.transform.v2$fitted.values,brooklyn_2016_2020_final.lm.transform.v2$residuals, col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
+#2.2.6.5 - a scale-location plot
+ggplot(brooklyn_2016_2020_final.lm.transform.v2, aes(x=.fitted, y=sqrt(abs(.stdresid)))) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  geom_smooth() +
+  ggtitle("Scale-Location plot : Standardized Residual vs Fitted values")
+
+#2.2.6.6 - normal QQ plot
+ggplot(brooklyn_2016_2020_final, aes(sample=brooklyn_2016_2020_final.lm.transform.v2$residuals)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = "QQ Plot of BC Model")
+
+
+#2.2.7.1 - Observing the histogram and Q-Q plots of above transformed model (version 2) reveals that the 
+#data is too peaked in the middle (Heavy tailed) and the distribution is leptokurtic instead normal
+
+#Transform-leptokurtic-distribution-to-normality using LambertW package
+MLE_LambertW.Mod.Lh <- MLE_LambertW(brooklyn_2016_2020_final$adjprice, distname = "normal", type = "h")
+brooklyn_2016_2020_final$price_transform <- get_input(MLE_LambertW.Mod.Lh)
+test_normality(brooklyn_2016_2020_final$price_transform)
+
+#Root ⁿ√x
+brooklyn_2016_2020_final$price_transform <- brooklyn_2016_2020_final$price^(1/2)
+test_normality(brooklyn_2016_2020_final$price_transform)
+
+#Reciprocal 1/x
+brooklyn_2016_2020_final$price_transform <- (1/brooklyn_2016_2020_final$price+0.1)
+test_normality(brooklyn_2016_2020_final$price_transform)
+
+#Logarithm log(x)
+brooklyn_2016_2020_final$price_transform <- log(brooklyn_2016_2020_final$price) + min(brooklyn_2016_2020_final$price) + 1
+test_normality(brooklyn_2016_2020_final$price_transform)
+
+
+#2.2.7.2 - New version of model by adding price inverse from step 2.2.7.1
+brooklyn_2016_2020_final.lm.transform.v3 <- lm(formula = price_transform~
+                                              factor(bldclasssalecategory)*grosssqft+  #applying interaction terms
+                                              factor(zip)+
+                                              logage,
+                                            brooklyn_2016_2020_final)
+brooklyn_2016_2020_final.lm.transform.v3.summary <- summary(brooklyn_2016_2020_final.lm.transform.v3)
+brooklyn_2016_2020_final.lm.transform.v3.summary
+
+
+#2.2.7.3 - Diagnostic plots with multiple predictors before transformation
+layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
+plot(brooklyn_2016_2020_final.lm.transform.v3)
+
+#2.2.7.4 - Test IID assumptions
+
+#Kolmogorov-Smirnov test for normality
+hist(brooklyn_2016_2020_final.lm.transform.v3$residuals)
+ks.test(brooklyn_2016_2020_final.lm.transform.v3$residuals/summary(brooklyn_2016_2020_final.lm.transform.v3)$sigma, pnorm)
+
+#Breusch-Pagan test for normality heteroscedasticity
+#The Breusch-Pagan test is used to determine whether or not heteroscedasticity is present in a regression model.
+
+#The test uses the following null and alternative hypotheses:
+
+#Null Hypothesis (H0): Homoscedasticity is present (the residuals are distributed with equal variance)
+#Alternative Hypothesis (HA): Heteroscedasticity is present (the residuals are not distributed with equal variance)
+
+#If the p-value of the test is less than some significance level (i.e. α = .05) then we reject the null hypothesis 
+#and conclude that heteroscedasticity is present in the regression model.
+bptest(brooklyn_2016_2020_final.lm.transform.v3)
+
+#If the residuals become more spread out at higher values in the plot, this is a tell-tale sign that heteroscedasticity is present.
+plot(brooklyn_2016_2020_final.lm.transform.v3$fitted.values,brooklyn_2016_2020_final.lm.transform.v3$residuals, col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
+#2.2.7.5 - a scale-location plot
+ggplot(brooklyn_2016_2020_final.lm.transform.v3, aes(x=.fitted, y=sqrt(abs(.stdresid)))) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  geom_smooth() +
+  ggtitle("Scale-Location plot : Standardized Residual vs Fitted values")
+
+#2.2.7.6 - normal QQ plot
+ggplot(brooklyn_2016_2020_final, aes(sample=brooklyn_2016_2020_final.lm.transform.v3$residuals)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = "QQ Plot of BC Model")
+
+
+#2.2.7.7 - Adding predicted price column to final dataset
+brooklyn_2016_2020_final$price_predicted <- predict(brooklyn_2016_2020_final.lm.transform.v3, 
+                                                    newdata= brooklyn_2016_2020_final)
