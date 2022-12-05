@@ -26,7 +26,9 @@ library(MASS)
 library(faraway)
 library(reshape2)
 
-setwd('C:\\Prinu\\Personal\\Studies\\Masters\\UChicago\\After Admission\\Courses\\Statistical Analysis\\Assignments\\Final Assignment - Part1\\data')
+# setwd('C:\\Prinu\\Personal\\Studies\\Masters\\UChicago\\After Admission\\Courses\\Statistical Analysis\\Assignments\\Final Assignment - Part1\\data')
+
+setwd("C:/Users/QZHAN101/Downloads/play/UCHICAGO/MSCA_31007_ON01_Autumn_2022_Statistical_Analysis/Statistical_Analysis_final_project")
 
 #*******************************Step 1: Import and prepare the data for analysis*******************************#
 
