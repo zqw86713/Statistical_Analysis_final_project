@@ -56,11 +56,27 @@ brooklyn_2020 <- tail(brooklyn_2020, -7)
 
 #define column names for each dataframes
 colnames <- c(
-  "borough","neighborhood","bldclasscat","taxclasscurr",
-  "block","lot","easement","bldclasscurr","address",
-  "aptnum","zip","resunits","comunits","totunits",
-  "landsqft","grosssqft","yrbuilt","taxclasssale",
-  "bldclasssale","price","date"
+  "borough",
+  "neighborhood",
+  "bldclasscat",
+  "taxclasscurr",
+  "block",
+  "lot",
+  "easement",
+  "bldclasscurr",
+  "address",
+  "aptnum",
+  "zip",
+  "resunits",
+  "comunits",
+  "totunits",
+  "landsqft",
+  "grosssqft",
+  "yrbuilt",
+  "taxclasssale",
+  "bldclasssale",
+  "price",
+  "date"
 )
 
 colnames(brooklyn_2016) <- colnames
