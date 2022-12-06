@@ -323,83 +323,6 @@ brooklyn_2016_2020_final %>%
   labs(x = "Variable Value", y = "Price ($1000s)") +
   theme_minimal()
 
-#2.1.2.1 - Neighborhood consolidation
-#https://www.unitedstateszipcodes.org/11223/
-#unique((brooklyn_2016_2020_final %>% filter(str_detect(neighborhood, "FLATBUSH-CENTRAL")))$zip)
-#unique((brooklyn_2016_2020_final %>% filter(str_detect(zip, "11234")))$neighborhood)
-
-#COBBLE HILL    same as   COBBLE HILL-WEST
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "COBBLE HILL-WEST")] <- "COBBLE HILL"
-
-#Zipcodes in neighborhoods FLATBUSH-CENTRAL, FLATBUSH-LEFFERTS GARDEN, FLATBUSH-EAST, FLATBUSH-NORTH overlap each other.
-#So combine all those neighborhoods to one as FLATBUSH
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "FLATBUSH-CENTRAL")] <- "FLATBUSH"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "FLATBUSH-LEFFERTS GARDEN")] <- "FLATBUSH"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "FLATBUSH-EAST")] <- "FLATBUSH"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "FLATBUSH-NORTH")] <- "FLATBUSH"
-
-#Zipcodes in neighborhoods DOWNTOWN-FULTON MALL, DOWNTOWN-FULTON FERRY, DOWNTOWN-METROTECH, BROOKLYN HEIGHTS overlap each other.
-#So combine all those neighborhoods to one as DOWNTOWN BROOKLYN
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "DOWNTOWN-FULTON MALL")] <- "DOWNTOWN BROOKLYN"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "DOWNTOWN-FULTON FERRY")] <- "DOWNTOWN BROOKLYN"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "DOWNTOWN-METROTECH")] <- "DOWNTOWN BROOKLYN"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "BROOKLYN HEIGHTS")] <- "DOWNTOWN BROOKLYN"
-
-#Zipcodes in neighborhoods OLD MILL BASIN, MILL BASIN overlap each other.
-#So combine all those neighborhoods to one as MILL BASIN
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OLD MILL BASIN")] <- "MILL BASIN"
-
-#Zipcodes in neighborhoods WILLIAMSBURG-SOUTH, WILLIAMSBURG-NORTH, WILLIAMSBURG-CENTRAL, WILLIAMSBURG-EAST overlap each other.
-#So combine all those neighborhoods to one as DOWNTOWN BROOKLYN
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "WILLIAMSBURG-SOUTH")] <- "WILLIAMSBURG"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "WILLIAMSBURG-NORTH")] <- "WILLIAMSBURG"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "WILLIAMSBURG-CENTRAL")] <- "WILLIAMSBURG"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "WILLIAMSBURG-EAST")] <- "WILLIAMSBURG"
-
-#Zipcodes in neighborhoods PARK SLOPE, PARK SLOPE SOUTH overlap each other.
-#So combine all those neighborhoods to one as PARK SLOPE SOUTH
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["neighborhood"]], "PARK SLOPE")] <- "PARK SLOPE SOUTH"
-
-#Zipcode 11234 actually belongs to BERGEN BEACH
-#So modify all those neighborhoods where zipcode=11234 to BERGEN BEACH.
-#Here zipcode in neighborhoods MILL BASIN, FLATLANDS changed to BERGEN BEACH
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11234")] <- "BERGEN BEACH"
-
-#Zipcode 11223 actually belongs to BENSONHURST
-#So modify all those neighborhoods where zipcode=11223 to BENSONHURST.
-#Here zipcode in neighborhoods OCEAN PARKWAY-NORTH, OCEAN PARKWAY-SOUTH changed to BENSONHURST
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11223")] <- "BENSONHURST"
-
-#Zipcode 11235 actually belongs to SHEEPSHEAD BAY
-#So modify all those neighborhoods where zipcode=11235 to SHEEPSHEAD BAY
-#Here zipcode in neighborhoods OCEAN PARKWAY-SOUTH,MANHATTAN BEACH,BRIGHTON BEACH changed to SHEEPSHEAD BAY
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11235")] <- "SHEEPSHEAD BAY"
-
-#Zipcode 11221 actually belongs to BUSHWICK
-#So modify neighborhood=OCEAN HILL and zipcode=11221 to BUSHWICK
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11221") & 
-                                           str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN HILL")] <- "BUSHWICK"
-
-#Zipcode 11212 actually belongs to BROWNSVILLE
-#So modify neighborhood=OCEAN HILL and zipcode=11212 to BROWNSVILLE
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11212") & 
-                                             str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN HILL")] <- "BROWNSVILLE"
-
-
-#Zipcode 11230 actually belongs to OCEAN PARKWAY-NORTH
-#So modify neighborhood=OCEAN HILL and zipcode=11230 to OCEAN PARKWAY-NORTH
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11230") & 
-                                             str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN HILL")] <- "OCEAN PARKWAY-NORTH"
-
-
-#Zipcode 11201 actually belongs to DOWNTOWN BROOKLYN
-#So modify neighborhood=OCEAN HILL & OCEAN PARKWAY-NORTH and zipcode=11201 to DOWNTOWN BROOKLYN
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11201") & 
-                                             str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN HILL")] <- "DOWNTOWN BROOKLYN"
-brooklyn_2016_2020_final[["neighborhood"]][str_detect(brooklyn_2016_2020_final[["zip"]], "11201") & 
-                                             str_detect(brooklyn_2016_2020_final[["neighborhood"]], "OCEAN PARKWAY-NORTH")] <- "DOWNTOWN BROOKLYN"
-
-
 
 #2.1.3.1 - Additionally restrict the data to observation where price is greater than 0
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% filter(price > 0 & !is.na(price))
@@ -430,6 +353,7 @@ ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=bldcl
 ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=zip))
 ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=block))
 ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=neighborhood))
+
 
 #2.1.3.5 - effect of the predictor variables on target variable 'price'
 brooklyn_2016_2020_final %>%
@@ -525,43 +449,43 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
 brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('duplicate_row'))
 
 
-#2.2.1.4 - find the average price of each neighborhood and assign that price to rows that has the price between 1 and 3000 for those matching neighborhood
+#2.2.1.4 - find the average price of each neighborhood and corresponding zip and assign that average price to rows 
+#that has the price between 1 and 10000 for those matching neighborhood and zip
 func.df.adjPrice <- function(df, neighborhoods, zips) {
   df$adjprice = df$price
   colname_price = 'adjprice'
   colname_neighborhood = 'neighborhood'
   colname_zip = 'zip'
-  for (item_neighborhood in neighborhoods) {
-      df_price_temp <- df %>% filter(price > 3000 & neighborhood == item_neighborhood)
-      if(nrow(df_price_temp) > 0){
-        df[[colname_price]][df[[colname_price]] > 0 & 
-                            df[[colname_price]] <= 3000 & 
-                            df[[colname_neighborhood]] == item_neighborhood] <- floor(mean(df_price_temp$price))
-        break
-      }
+  
+  group_by_neighbour_zip <- df %>% 
+    filter(is.element(neighborhood, unique_neighborhoods) & price > 3000) %>%  
+    group_by(neighborhood, zip) %>% 
+    summarise(mean_price=floor(mean(price)), .groups = 'drop') %>%
+    as.data.frame()
+  
+  for(i in 1:nrow(group_by_neighbour_zip)) {
+    row <- group_by_neighbour_zip[i,]
+    col_neighborhood_val <- row[,1]
+    col_zip_val <- row[,2]
+    col_mean_price_val <- row[,3]
+    
+    df[[colname_price]][df[[colname_price]] > 0 & 
+                        df[[colname_price]] <= 3000 & 
+                        df[[colname_neighborhood]] == col_neighborhood_val & 
+                        df[[colname_zip]] == col_zip_val] <- col_mean_price_val
   }
   
   return(df)
 }
 brooklyn_2016_2020_final <- func.df.adjPrice(brooklyn_2016_2020_final, unique_neighborhoods, unique_zips)
 
-
-#2.2.1.5 - find the average price of each neighborhood and assign that price to those rows with duplicate_row = 1 and matching neighborhood
-func.df.adjPrice.duplicate <- function(df, neighborhoods) {
-  df$adjprice = df$price
-  colname_price = 'adjprice'
-  colname_duplicate_row = 'duplicate_row'
-  colname_neighborhood = 'neighborhood'
-  for (item in neighborhoods) {
-    df_price_temp <- df %>% filter(duplicate_row == 1 & neighborhood == item)
-    print(floor(max(df_price_temp$price)))
-    #df[[colname_price]][df[[colname_duplicate_row]] == 1 & df[[colname_neighborhood]] == item] <- floor(max(df_price_temp$price))
-  }
-  
-  return(df)
-}
-brooklyn_2016_2020_final <- func.df.adjPrice.duplicate(brooklyn_2016_2020_final, unique_neighborhoods)
-
+#2.2.1.5 - Set landsqft = grosssqft if it's 0
+brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+  mutate(adjlandsqft = case_when(
+    landsqft <= 0  ~ grosssqft,
+    TRUE  ~ landsqft
+  ))
+brooklyn_2016_2020_final <- func.df.ToNum(brooklyn_2016_2020_final,list('adjlandsqft'))
 
 #2.2.2.1 - extract year from sale date
 brooklyn_2016_2020_final$yrsold <- format(brooklyn_2016_2020_final$date,"%Y")
@@ -610,6 +534,10 @@ brooklyn_2016_2020_final.lm.transform.v1 <- lm(formula = adjprice~
                                             brooklyn_2016_2020_final)
 brooklyn_2016_2020_final.lm.transform.v1.summary <- summary(brooklyn_2016_2020_final.lm.transform.v1)
 brooklyn_2016_2020_final.lm.transform.v1.summary
+
+
+RMSE_transform_v1_model <- sqrt(mean(brooklyn_2016_2020_final.lm.transform.v1.summary$residuals^2))
+sprintf("Root Mean Square Error(RMSE) for Transformed V1 Model : %s", round(RMSE_transform_v1_model, digits = 4))
 
 
 #2.2.5.3 - Diagnostic plots with multiple predictors before transformation
@@ -662,11 +590,13 @@ summary(lm(formula = adjprice~
                 factor(yrbuiltbycategory)+
                 factor(decade)+
                 grosssqft+
-                landsqft+  
+                adjlandsqft+  
                 block+
                 lot+
                 logage+
                 yrbuilt+
+                borough+
+                factor(bldclasscat)+
                 factor(taxclasssale))^2,
            brooklyn_2016_2020_final))
 
@@ -674,127 +604,52 @@ summary(lm(formula = adjprice~
 #2.2.6.2 - New version of model by adding interaction terms from step 2.2.6.1
 brooklyn_2016_2020_final.lm.transform.v2 <- lm(formula = adjprice~
                                               factor(bldclasssalecategory)*grosssqft+
-                                              factor(bldclasssalecategory)*landsqft+
                                               factor(zip)+
                                               logage,
                                             brooklyn_2016_2020_final)
 brooklyn_2016_2020_final.lm.transform.v2.summary <- summary(brooklyn_2016_2020_final.lm.transform.v2)
 brooklyn_2016_2020_final.lm.transform.v2.summary
 
-
-#2.2.6.3 - Diagnostic plots with multiple predictors before transformation
-layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
-plot(brooklyn_2016_2020_final.lm.transform.v2)
-
-#2.2.6.4 - Test IID assumptions
-
-#Kolmogorov-Smirnov test for normality
-hist(brooklyn_2016_2020_final.lm.transform.v2$residuals)
-ks.test(brooklyn_2016_2020_final.lm.transform.v2$residuals/summary(brooklyn_2016_2020_final.lm.transform.v2)$sigma, pnorm)
-
-#Breusch-Pagan test for normality heteroscedasticity
-#The Breusch-Pagan test is used to determine whether or not heteroscedasticity is present in a regression model.
-
-#The test uses the following null and alternative hypotheses:
-
-#Null Hypothesis (H0): Homoscedasticity is present (the residuals are distributed with equal variance)
-#Alternative Hypothesis (HA): Heteroscedasticity is present (the residuals are not distributed with equal variance)
-
-#If the p-value of the test is less than some significance level (i.e. α = .05) then we reject the null hypothesis 
-#and conclude that heteroscedasticity is present in the regression model.
-bptest(brooklyn_2016_2020_final.lm.transform.v2)
-
-#If the residuals become more spread out at higher values in the plot, this is a tell-tale sign that heteroscedasticity is present.
-plot(brooklyn_2016_2020_final.lm.transform.v2$fitted.values,brooklyn_2016_2020_final.lm.transform.v2$residuals, col = "dodgerblue",
-     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
-abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
-
-#2.2.6.5 - a scale-location plot
-ggplot(brooklyn_2016_2020_final.lm.transform.v2, aes(x=.fitted, y=sqrt(abs(.stdresid)))) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  geom_smooth() +
-  ggtitle("Scale-Location plot : Standardized Residual vs Fitted values")
-
-#2.2.6.6 - normal QQ plot
-ggplot(brooklyn_2016_2020_final, aes(sample=brooklyn_2016_2020_final.lm.transform.v2$residuals)) +
-  stat_qq() +
-  stat_qq_line() +
-  labs(title = "QQ Plot of BC Model")
+RMSE_transform_v2_model <- sqrt(mean(brooklyn_2016_2020_final.lm.transform.v2.summary$residuals^2))
+sprintf("Root Mean Square Error(RMSE) for Transformed V2 Model : %s", round(RMSE_transform_v2_model, digits = 4))
 
 
-#2.2.7.1 - Observing the histogram and Q-Q plots of above transformed model (version 2) reveals that the 
-#data is too peaked in the middle (Heavy tailed) and the distribution is leptokurtic instead normal
 
-#Transform-leptokurtic-distribution-to-normality using LambertW package
-MLE_LambertW.Mod.Lh <- MLE_LambertW(brooklyn_2016_2020_final$adjprice, distname = "normal", type = "h")
-brooklyn_2016_2020_final$price_transform <- get_input(MLE_LambertW.Mod.Lh)
-test_normality(brooklyn_2016_2020_final$price_transform)
+#2.3 - Reach a stopping point 
 
-#Root ⁿ√x
-brooklyn_2016_2020_final$price_transform <- brooklyn_2016_2020_final$price^(1/2)
-test_normality(brooklyn_2016_2020_final$price_transform)
+#2.3.1.1 - Applying Box-Cox transformations on strictly positive response variable
+boxcox <- boxcox(brooklyn_2016_2020_final.lm.transform.v2, lambda = seq(-0.25, 0.75, by = 0.05), plotit = TRUE)
 
-#Reciprocal 1/x
-brooklyn_2016_2020_final$price_transform <- (1/brooklyn_2016_2020_final$price+0.1)
-test_normality(brooklyn_2016_2020_final$price_transform)
+#find optimal lambda for Box-Cox transformation 
+optimal_lambda_boxcox <- boxcox$x[which.max(boxcox$y)]
 
-#Logarithm log(x)
-brooklyn_2016_2020_final$price_transform <- log(brooklyn_2016_2020_final$price) + min(brooklyn_2016_2020_final$price) + 1
-test_normality(brooklyn_2016_2020_final$price_transform)
+#Using the Box-Cox method, we see that λ=0.31565 is both in the confidence interval, and is extremely close to the maximum, 
+#which suggests a transformation of the form
+
+##(y^λ − 1)/λ = (y^0.31565 − 1)/0.31565
+brooklyn_2016_2020_final$boxcoxprice <- ((brooklyn_2016_2020_final$adjprice^optimal_lambda_boxcox - 1) / optimal_lambda_boxcox)
 
 
-#2.2.7.2 - New version of model by adding price inverse from step 2.2.7.1
-brooklyn_2016_2020_final.lm.transform.v3 <- lm(formula = price_transform~
-                                              factor(bldclasssalecategory)*grosssqft+  #applying interaction terms
-                                              factor(zip)+
-                                              logage,
-                                            brooklyn_2016_2020_final)
+#2.3.1.2 - New version of model by adding Box-Cox transformations from step 2.2.7.1
+brooklyn_2016_2020_final.lm.transform.v3 <- lm(formula = boxcoxprice~
+                                                 grosssqft+sqrt(grosssqft)+
+                                                 factor(zip)+
+                                                 factor(decade)*yrbuilt,
+                                               brooklyn_2016_2020_final)
 brooklyn_2016_2020_final.lm.transform.v3.summary <- summary(brooklyn_2016_2020_final.lm.transform.v3)
 brooklyn_2016_2020_final.lm.transform.v3.summary
 
 
-#2.2.7.3 - Diagnostic plots with multiple predictors before transformation
-layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
-plot(brooklyn_2016_2020_final.lm.transform.v3)
+#2.3.1.3 - un-transform the response variable from step 2.2.7.2
+invBoxCox <- function(x, lambda)
+  if (lambda == 0) exp(x) else (lambda*x + 1)^(1/lambda)
 
-#2.2.7.4 - Test IID assumptions
+# un-transform’ your predictions, manually compute RMSE, and compare that to your first model.
+brooklyn_2016_2020_final$boxcoxprice_predicted <- predict(brooklyn_2016_2020_final.lm.transform.v3, 
+                                                          newdata= brooklyn_2016_2020_final)
 
-#Kolmogorov-Smirnov test for normality
-hist(brooklyn_2016_2020_final.lm.transform.v3$residuals)
-ks.test(brooklyn_2016_2020_final.lm.transform.v3$residuals/summary(brooklyn_2016_2020_final.lm.transform.v3)$sigma, pnorm)
+brooklyn_2016_2020_final$price_predicted <- floor(invBoxCox(brooklyn_2016_2020_final$boxcoxprice_predicted, optimal_lambda_boxcox))
+brooklyn_2016_2020_final$price_residuals <- brooklyn_2016_2020_final$adjprice - brooklyn_2016_2020_final$price_predicted
 
-#Breusch-Pagan test for normality heteroscedasticity
-#The Breusch-Pagan test is used to determine whether or not heteroscedasticity is present in a regression model.
-
-#The test uses the following null and alternative hypotheses:
-
-#Null Hypothesis (H0): Homoscedasticity is present (the residuals are distributed with equal variance)
-#Alternative Hypothesis (HA): Heteroscedasticity is present (the residuals are not distributed with equal variance)
-
-#If the p-value of the test is less than some significance level (i.e. α = .05) then we reject the null hypothesis 
-#and conclude that heteroscedasticity is present in the regression model.
-bptest(brooklyn_2016_2020_final.lm.transform.v3)
-
-#If the residuals become more spread out at higher values in the plot, this is a tell-tale sign that heteroscedasticity is present.
-plot(brooklyn_2016_2020_final.lm.transform.v3$fitted.values,brooklyn_2016_2020_final.lm.transform.v3$residuals, col = "dodgerblue",
-     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
-abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
-
-#2.2.7.5 - a scale-location plot
-ggplot(brooklyn_2016_2020_final.lm.transform.v3, aes(x=.fitted, y=sqrt(abs(.stdresid)))) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  geom_smooth() +
-  ggtitle("Scale-Location plot : Standardized Residual vs Fitted values")
-
-#2.2.7.6 - normal QQ plot
-ggplot(brooklyn_2016_2020_final, aes(sample=brooklyn_2016_2020_final.lm.transform.v3$residuals)) +
-  stat_qq() +
-  stat_qq_line() +
-  labs(title = "QQ Plot of BC Model")
-
-
-#2.2.7.7 - Adding predicted price column to final dataset
-brooklyn_2016_2020_final$price_predicted <- predict(brooklyn_2016_2020_final.lm.transform.v3, 
-                                                    newdata= brooklyn_2016_2020_final)
+RMSE_transform_v3_model <- sqrt(mean(brooklyn_2016_2020_final$price_residuals^2))
+sprintf("Root Mean Square Error(RMSE) for Transformed V3 Model : %s", round(RMSE_transform_v3_model, digits = 4))
