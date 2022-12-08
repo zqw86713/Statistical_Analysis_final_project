@@ -397,18 +397,41 @@ ggplot(data=brooklyn_2016_2020_final) +
   labs(title="Housing Prices in Brooklyn, NY (in $100,000)", 
        x="Sale Price of Individual Homes/Condos")   
 
-ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=grosssqft, y=price))
-ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=log(grosssqft), y=price))
-ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=yrbuilt, y=price))
-ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=bldclasssale))
-ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=zip))
-ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=block))
-ggplot(data=brooklyn_2016_2020_final) + geom_point(mapping= aes(x=price, y=neighborhood))
+ggplot(data=brooklyn_2016_2020_final) + 
+  geom_point(mapping= aes(x=grosssqft, y=price))
+
+ggplot(data=brooklyn_2016_2020_final) + 
+  geom_point(mapping= aes(x=log(grosssqft), y=price))
+
+ggplot(data=brooklyn_2016_2020_final) + 
+  geom_point(mapping= aes(x=yrbuilt, y=price))
+
+ggplot(data=brooklyn_2016_2020_final) + 
+  geom_point(mapping= aes(x=price, y=bldclasssale))
+
+ggplot(data=brooklyn_2016_2020_final) + 
+  geom_point(mapping= aes(x=price, y=zip))
+
+ggplot(data=brooklyn_2016_2020_final) + 
+  geom_point(mapping= aes(x=price, y=block))
+
+ggplot(data=brooklyn_2016_2020_final) + 
+  geom_point(mapping= aes(x=price, y=neighborhood))
 
 
 #2.1.3.5 - effect of the predictor variables on target variable 'price'
 brooklyn_2016_2020_final %>%
-  dplyr::select(c(price,zip,neighborhood,block,grosssqft,landsqft,yrbuilt,bldclasssale,taxclasssale)) %>%
+  dplyr::select(c(
+    price,
+    zip,
+    neighborhood,
+    block,
+    grosssqft,
+    landsqft,
+    yrbuilt,
+    bldclasssale,
+    taxclasssale
+    )) %>%
   melt(id.vars = "price") %>%
   ggplot(aes(x = value, y = price, colour = variable)) +
   geom_point(alpha = 0.7) +
@@ -417,63 +440,6 @@ brooklyn_2016_2020_final %>%
   labs(x = "Variable Value", y = "Price ($1000s)") +
   theme_minimal()
 
-#2.1.4.1 - check the model summary without any transformation
-brooklyn_2016_2020_final.lm.native <- lm(formula = price~
-                                           factor(bldclasssale)+
-                                           factor(zip)+
-                                           grosssqft+
-                                           block+
-                                           yrbuilt,
-                                         brooklyn_2016_2020_final)
-brooklyn_2016_2020_final.lm.native.summary <- summary(brooklyn_2016_2020_final.lm.native)
-brooklyn_2016_2020_final.lm.native.summary
-
-#get metrics from native model summary
-brooklyn_2016_2020_final.lm.native.summary.metric <- data.frame(
-  R2 = brooklyn_2016_2020_final.lm.native.summary$r.squared,
-  Adj.R2 = brooklyn_2016_2020_final.lm.native.summary$adj.r.squared
-)
-
-RMSE_native_model <- sqrt(mean(brooklyn_2016_2020_final.lm.native.summary$residuals^2))
-sprintf("Root Mean Square Error(RMSE) for Native Model : %s", round(RMSE_native_model, digits = 4))
-
-
-#2.1.4.2 - Diagnostic plots with multiple predictors before transformation
-layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
-plot(brooklyn_2016_2020_final.lm.native)
-
-
-#2.1.5.3 - Test IID assumptions
-
-#Kolmogorov-Smirnov test for normality
-hist(brooklyn_2016_2020_final.lm.native$residuals)
-ks.test(brooklyn_2016_2020_final.lm.native$residuals/
-          summary(brooklyn_2016_2020_final.lm.native)$sigma, pnorm)
-
-#Breusch-Pagan test for normality heteroscedasticity
-#The Breusch-Pagan test is used to determine whether or not 
-#heteroscedasticity is present in a regression model.
-
-#The test uses the following null and alternative hypotheses:
-
-#Null Hypothesis (H0): Homoscedasticity is present (the residuals are 
-#distributed with equal variance)
-#Alternative Hypothesis (HA): Heteroscedasticity is present (the 
-#residuals are not distributed with equal variance)
-
-#If the p-value of the test is less than some significance level (i.e. 
-#α = .05) then we reject the null hypothesis 
-#and conclude that heteroscedasticity is present in the regression model.
-bptest(brooklyn_2016_2020_final.lm.native)
-
-#If the residuals become more spread out at higher values in the plot, 
-#this is a tell-tale sign that heteroscedasticity is present.
-plot(brooklyn_2016_2020_final.lm.native$fitted.values, 
-     brooklyn_2016_2020_final.lm.native$residuals, col = "dodgerblue",
-     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
-abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
-
-#it still seems very clear that the constant variance assumption is violated.
 
 #2.2 Pre-modeling and feature engineering
 
