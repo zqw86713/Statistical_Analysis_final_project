@@ -443,30 +443,28 @@ brooklyn_2016_2020_final %>%
 
 #2.2 Pre-modeling and feature engineering
 
-#Begin to construct linear models explaining price (or a transformation 
-#of price).  Consider your total model degrees of 
-#freedom, your adjusted R^2, and your RMSE (root means square error).  
-#Also consider whether your models show severe violations 
-#of the OLS model assumptions, or merely slight violations of the OLS 
-#model assumptions.
-
-#feature engineering
-
 #2.2.1.1 - find the average price of each neighborhood and assign that
 # price to price having 0 for those matching neighborhood
 unique_neighborhoods <- as.list(unique(brooklyn_2016_2020_final$neighborhood))
-unique_zips <- as.list(unique(brooklyn_2016_2020_final$zip))
 
+unique_zips <- as.list(unique(brooklyn_2016_2020_final$zip))
 
 #2.2.1.2 - Remove duplicates based on columns 
 #(neighborhood,bldclasscat,block,zip,resunits,totunits,landsqft,
 #grosssqft,yrbuilt,bldclasssale,price)
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final[
-  !duplicated(brooklyn_2016_2020_final, 
-  by=c('neighborhood','bldclasscat','block',
-         'zip','resunits','totunits','landsqft',
-         'grosssqft','yrbuilt','bldclasssale',
-         'price')
+  !duplicated(brooklyn_2016_2020_final, by=c('neighborhood',
+       'bldclasscat',
+       'block',
+       'zip',
+       'resunits',
+       'totunits',
+       'landsqft',
+       'grosssqft',
+       'yrbuilt',
+       'bldclasssale',
+       'price'
+       )
   ), ]
 
 
@@ -475,12 +473,23 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final[
 #grosssqft,yrbuilt,bldclasssale)
 brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
   group_by(
-    neighborhood,address,bldclasscat,block,zip,resunits,
-    totunits,landsqft,grosssqft,yrbuilt,bldclasssale) %>% 
+    neighborhood,
+    address,
+    bldclasscat,
+    block,
+    zip,
+    resunits,
+    totunits,
+    landsqft,
+    grosssqft,
+    yrbuilt,
+    bldclasssale
+    ) %>% 
   mutate(duplicate_row = case_when(
     n()>1  ~ 1,
     TRUE  ~ 0
   ))
+
 brooklyn_2016_2020_final <- func.df.ToInt(
   brooklyn_2016_2020_final,list('duplicate_row')
 )
@@ -587,95 +596,10 @@ brooklyn_2016_2020_final <- func.df.ToInt(
 brooklyn_2016_2020_final$logage <- 
   log(brooklyn_2016_2020_final$yrsold-brooklyn_2016_2020_final$yrbuilt+0.1)
 
-
-#2.2.5.2 - check the model summary after transformations
-brooklyn_2016_2020_final.lm.transform.v1 <- lm(formula = adjprice~
-                                              factor(bldclasssalecategory)+
-                                              factor(zip)+
-                                              grosssqft+
-                                              factor(decade)+
-                                              factor(yrbuiltbycategory)+
-                                              block+
-                                              logage,
-                                            brooklyn_2016_2020_final)
-
-brooklyn_2016_2020_final.lm.transform.v1.summary <- summary(brooklyn_2016_2020_final.lm.transform.v1)
-
-brooklyn_2016_2020_final.lm.transform.v1.summary
-
-
-RMSE_transform_v1_model <- sqrt(mean(brooklyn_2016_2020_final.lm.transform.v1.summary$residuals^2))
-sprintf("Root Mean Square Error(RMSE) for Transformed V1 Model : %s", round(RMSE_transform_v1_model, digits = 4))
-
-
-#2.2.5.3 - Diagnostic plots with multiple predictors before transformation
-layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
-plot(brooklyn_2016_2020_final.lm.transform.v1)
-
 #2.2.5.4 - Test IID assumptions
 
-#Kolmogorov-Smirnov test for normality
-hist(brooklyn_2016_2020_final.lm.transform.v1$residuals)
-ks.test(brooklyn_2016_2020_final.lm.transform.v1$residuals/summary(brooklyn_2016_2020_final.lm.transform.v1)$sigma, pnorm)
-
-#Breusch-Pagan test for normality heteroscedasticity
-#The Breusch-Pagan test is used to determine whether or not 
-#heteroscedasticity is present in a regression model.
-
-#The test uses the following null and alternative hypotheses:
-
-#Null Hypothesis (H0): Homoscedasticity is present (the residuals 
-#are distributed with equal variance)
-#Alternative Hypothesis (HA): Heteroscedasticity is present (the 
-#residuals are not distributed with equal variance)
-
-#If the p-value of the test is less than some significance level 
-#(i.e. α = .05) then we reject the null hypothesis 
-#and conclude that heteroscedasticity is present in the regression model.
-bptest(brooklyn_2016_2020_final.lm.transform.v1)
-
-#If the residuals become more spread out at higher values in the 
-#plot, this is a tell-tale sign that heteroscedasticity is present.
-plot(fitted(brooklyn_2016_2020_final.lm.transform.v1), 
-     resid(brooklyn_2016_2020_final.lm.transform.v1), col = "dodgerblue",
-     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
-abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
-
-
-#2.2.5.5 - a scale-location plot
-ggplot(brooklyn_2016_2020_final.lm.transform.v1, 
-  aes(x=.fitted, y=sqrt(abs(.stdresid)))) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  geom_smooth() +
-  ggtitle("Scale-Location plot : Standardized Residual vs Fitted values")
-
-#2.2.5.6 - normal QQ plot
-ggplot(brooklyn_2016_2020_final, 
-  aes(sample=brooklyn_2016_2020_final.lm.transform.v1$residuals)) +
-  stat_qq() +
-  stat_qq_line() +
-  labs(title = "QQ Plot of BC Model")
-
-#2.2.6.1 - Let's identify significance level from interaction between variables
-summary(lm(formula = adjprice~
-             (factor(bldclasssalecategory)+
-                factor(zip)+
-                factor(yrbuiltbycategory)+
-                factor(decade)+
-                grosssqft+
-                adjlandsqft+  
-                block+
-                lot+
-                logage+
-                yrbuilt+
-                borough+
-                factor(bldclasscat)+
-                factor(taxclasssale))^2,
-           brooklyn_2016_2020_final))
-
-
-#2.2.6.2 - New version of model by adding interaction terms from step 2.2.6.1
+#2.3 - Reach a stopping point 
+#New version of model by adding interaction terms 
 brooklyn_2016_2020_final.lm.transform.v2 <- lm(formula = adjprice~
                                               factor(bldclasssalecategory)*
                                                 grosssqft+
@@ -695,6 +619,8 @@ RMSE_transform_v2_model <- sqrt(
 sprintf("Root Mean Square Error(RMSE) for Transformed V2 Model : %s", 
         round(RMSE_transform_v2_model, digits = 4))
 
+
+#  Step 3.
 # to get property sold in Q3 and Q4 2020.
 q3_2020_sold <- filter(brooklyn_2016_2020_final, yrsold == "2020", quarter =="3" ) 
 
@@ -726,42 +652,4 @@ properties_sold_increase_rate <- (q4_count - q3_count)/q3_count
 properties_sold_increase_rate
 
 
-#2.3 - Reach a stopping point 
-
-#2.3.1.1 - Applying Box-Cox transformations on strictly positive response variable
-boxcox <- boxcox(brooklyn_2016_2020_final.lm.transform.v2, lambda = seq(-0.25, 0.75, by = 0.05), plotit = TRUE)
-
-#find optimal lambda for Box-Cox transformation 
-optimal_lambda_boxcox <- boxcox$x[which.max(boxcox$y)]
-
-#Using the Box-Cox method, we see that λ=0.31565 is both in the confidence interval, and is extremely close to the maximum, 
-#which suggests a transformation of the form
-
-##(y^λ − 1)/λ = (y^0.31565 − 1)/0.31565
-brooklyn_2016_2020_final$boxcoxprice <- ((brooklyn_2016_2020_final$adjprice^optimal_lambda_boxcox - 1) / optimal_lambda_boxcox)
-
-
-#2.3.1.2 - New version of model by adding Box-Cox transformations from step 2.2.7.1
-brooklyn_2016_2020_final.lm.transform.v3 <- lm(formula = boxcoxprice~
-                                                 grosssqft+sqrt(grosssqft)+
-                                                 factor(zip)+
-                                                 factor(decade)*yrbuilt,
-                                               brooklyn_2016_2020_final)
-brooklyn_2016_2020_final.lm.transform.v3.summary <- summary(brooklyn_2016_2020_final.lm.transform.v3)
-brooklyn_2016_2020_final.lm.transform.v3.summary
-
-
-#2.3.1.3 - un-transform the response variable from step 2.2.7.2
-invBoxCox <- function(x, lambda)
-  if (lambda == 0) exp(x) else (lambda*x + 1)^(1/lambda)
-
-# un-transform’ your predictions, manually compute RMSE, and compare that to your first model.
-brooklyn_2016_2020_final$boxcoxprice_predicted <- predict(brooklyn_2016_2020_final.lm.transform.v3, 
-                                                          newdata= brooklyn_2016_2020_final)
-
-brooklyn_2016_2020_final$price_predicted <- floor(invBoxCox(brooklyn_2016_2020_final$boxcoxprice_predicted, optimal_lambda_boxcox))
-brooklyn_2016_2020_final$price_residuals <- brooklyn_2016_2020_final$adjprice - brooklyn_2016_2020_final$price_predicted
-
-RMSE_transform_v3_model <- sqrt(mean(brooklyn_2016_2020_final$price_residuals^2))
-sprintf("Root Mean Square Error(RMSE) for Transformed V3 Model : %s", round(RMSE_transform_v3_model, digits = 4))
 
