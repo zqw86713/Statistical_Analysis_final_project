@@ -346,29 +346,6 @@ brooklyn_2016_2020_final %>%
   stat_density() + 
   theme_bw()
 
-
-#2.1.1.6 - effect of the predictor variables on target variable 'price'
-brooklyn_2016_2020_final %>%
-  dplyr::select(
-    c(price,
-      zip,
-      neighborhood,
-      block,
-      grosssqft,
-      landsqft,
-      yrbuilt,
-      bldclasssale,
-      taxclasssale
-      )) %>%
-  melt(id.vars = "price") %>%
-  ggplot(aes(x = value, y = price, colour = variable)) +
-  geom_point(alpha = 0.7) +
-  stat_smooth(aes(colour = "black")) +
-  facet_wrap(~variable, scales = "free", ncol = 2) +
-  labs(x = "Variable Value", y = "Price ($1000s)") +
-  theme_minimal()
-
-
 #2.1.3.1 - Additionally restrict the data to observation where 
 #price is greater than 0
 brooklyn_2016_2020_final <- 
@@ -424,13 +401,13 @@ brooklyn_2016_2020_final %>%
   dplyr::select(c(
     price,
     zip,
-    neighborhood,
-    block,
+    # neighborhood,
+    # block,
     grosssqft,
-    landsqft,
+    # landsqft,
     yrbuilt,
     bldclasssale,
-    taxclasssale
+    # taxclasssale
     )) %>%
   melt(id.vars = "price") %>%
   ggplot(aes(x = value, y = price, colour = variable)) +
@@ -577,7 +554,8 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
     is.element(format(date,"%m"), c("10", "11", "12"))  ~ 4
   ))
 
-brooklyn_2016_2020_final <- func.df.ToInt(brooklyn_2016_2020_final,list('quarter'))
+brooklyn_2016_2020_final <- 
+  func.df.ToInt(brooklyn_2016_2020_final,list('quarter'))
 
 
 #2.2.4.1 - group all "A5" "A1" "A9" "A4" "A3" "A2" "A0" "A7" "A6" to "A"
@@ -622,9 +600,11 @@ sprintf("Root Mean Square Error(RMSE) for Transformed V2 Model : %s",
 
 #  Step 3.
 # to get property sold in Q3 and Q4 2020.
-q3_2020_sold <- filter(brooklyn_2016_2020_final, yrsold == "2020", quarter =="3" ) 
+q3_2020_sold <- filter(brooklyn_2016_2020_final, 
+                       yrsold == "2020", quarter =="3" ) 
 
-q4_2020_sold <- filter(brooklyn_2016_2020_final, yrsold == "2020", quarter =="4" )  
+q4_2020_sold <- filter(brooklyn_2016_2020_final, 
+                       yrsold == "2020", quarter =="4" )  
 
 
 # average sold price at Q4, USD 1070895.
@@ -633,8 +613,11 @@ average_sold_price_q4 <- mean(q4_2020_sold$price)
 #  average sold price at Q3, USD 957949.9
 average_sold_price_q3 <- mean(q3_2020_sold$price)
 
+
+
 # average sold price all property types, quarter 4 over quarter 3.
-average_sold_price_change = (average_sold_price_q4 - average_sold_price_q3)/average_sold_price_q3
+average_sold_price_change = (
+  average_sold_price_q4 - average_sold_price_q3)/average_sold_price_q3
 
 # 0.1179029
 average_sold_price_change
@@ -652,4 +635,26 @@ properties_sold_increase_rate <- (q4_count - q3_count)/q3_count
 properties_sold_increase_rate
 
 
+# get all types of residential class
+residential_class_price_q3 <- filter(q3_2020_sold, str_detect(bldclasssale, "^A"))
+
+residential_class__price_q4 <- filter(q4_2020_sold, str_detect(bldclasssale, "^A"))
+
+q3_mean = mean(residential_class_price_q3$price)
+
+q4_mean = mean(residential_class__price_q4$price)
+
+(q4_mean - q3_mean)/q4_mean
+
+
+# get all types of condo class
+condo_class_q3 <- filter(q3_2020_sold, str_detect(bldclasssale, "^R"))
+
+condo_class_q4 <- filter(q4_2020_sold, str_detect(bldclasssale, "^R"))
+
+q3_mean = mean(condo_class_q3$price)
+
+q4_mean = mean(condo_class_q4$price)
+
+(q4_mean - q3_mean)/q3_mean
 
