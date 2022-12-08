@@ -1,9 +1,6 @@
-# ---
-# title: "MSCA 31007 Statistical Analysis - Final Assignment Part 1"
+# title: Final Assignment Part 1
 # author: Qingwei Zhang"
-# start_date: "11/25/2022"
-# last_revision_date: "12/09/2022"
-# ---
+
 
 install.packages("dplyr")
 install.packages("tidyverse")
@@ -30,9 +27,8 @@ library(reshape2)
 
 setwd("C:/Users/QZHAN101/Downloads/play/UCHICAGO/MSCA_31007_ON01_Autumn_2022_Statistical_Analysis/Statistical_Analysis_final_project")
 
+
 # Step 1: Import and prepare the data for analysis
-
-
 #1.1 Bring the data into R
 brooklyn_2016 <- read.csv('2016_brooklyn.csv')
 brooklyn_2017 <- read.csv('2017_brooklyn.csv')
@@ -176,11 +172,28 @@ brooklyn_2018 <- func.df.replace(brooklyn_2018, columns_with_hyphen, '-', '')
 brooklyn_2019 <- func.df.replace(brooklyn_2019, columns_with_hyphen, '-', '')
 brooklyn_2020 <- func.df.replace(brooklyn_2020, columns_with_hyphen, '-', '')
 
-#change data types for following columns
-columns_To_Int <- list('borough','taxclasscurr','block','lot','resunits','comunits','totunits','yrbuilt','taxclasssale','zip')
-columns_To_Num <- list('landsqft','grosssqft','price')
+#change data types to Integer for following columns
+columns_To_Int <- list(
+  'borough',
+  'taxclasscurr',
+  'block',
+  'lot',
+  'resunits',
+  'comunits',
+  'totunits',
+  'yrbuilt',
+  'taxclasssale',
+  'zip'
+)
 
+#change data types to numerical for following columns
+columns_To_Num <- list(
+  'landsqft',
+  'grosssqft',
+  'price'
+)
 
+# start changing data type for all five data sets, 2016 to 2020.
 brooklyn_2016 <- func.df.ToInt(brooklyn_2016,columns_To_Int)
 brooklyn_2016 <- func.df.ToNum(brooklyn_2016,columns_To_Num)
 brooklyn_2016 <- func.df.ToDate(brooklyn_2016,list('date'),format="%m/%d/%Y")
@@ -206,15 +219,14 @@ brooklyn_2020 <- func.df.ToNum(brooklyn_2020,columns_To_Num)
 brooklyn_2020 <- func.df.ToDate(brooklyn_2020,list('date'),format="%m/%d/%y")
 brooklyn_2020 <- brooklyn_2020 %>% filter(!is.na(price))
 
-#After doing data cleaning for brooklyn 2019 & 2020, we reduced 
-#from 117151 rows to 107270
+# to get the total observation number of rows.
 total_observations_after_cleanup <- nrow(brooklyn_2016) + 
   nrow(brooklyn_2017) + 
   nrow(brooklyn_2018) + 
   nrow(brooklyn_2019) +
   nrow(brooklyn_2020)
 
-#merge the dataframes
+#merge the data frames
 brooklyn_2016_2020_list <- list(
   brooklyn_2016, 
   brooklyn_2017, 
@@ -222,27 +234,17 @@ brooklyn_2016_2020_list <- list(
   brooklyn_2019, 
   brooklyn_2020
 )
+
 brooklyn_2016_2020 <- brooklyn_2016_2020_list %>% reduce(full_join)
 remove(brooklyn_2016_2020_list)
 
 
-
 #1.3 Filter the data and make transformations specific to this analysis 
-
-#For the purposes of this analysis, we will only consider purchases 
-#of single-family residences and single-unit apartments 
-#or condos.  Restrict the data to purchases where the building class at 
-#the time of sale starts with ‘A’ or ‘R’ and where 
-#the number of total units and the number of residential units are 
-#both 1.  Additionally restrict the data to observations 
-#where gross square footage is more than 0 and sale price is non-missing.
-#The resulting data set should have roughly 19,000 rows. 
-
 
 #filter observations considering purchases of single-family residences
 # and single-unit apartments or condos
 #Restrict the data to purchases where the building class at the time
-# of sale starts with ‘A’ or ‘R’
+# of sale starts with ‘A’(ONE FAMILY DWELLINGS) or ‘R’(CONDOMINIUMS).
 brooklyn_2016_2020_final <- brooklyn_2016_2020 %>% 
   filter(str_detect(bldclasssale, "^A") 
          | str_detect(bldclasssale, "^R"))
