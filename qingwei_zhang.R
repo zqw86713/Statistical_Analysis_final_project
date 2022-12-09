@@ -645,8 +645,7 @@ ggplot(data_2016_2020_clean, aes(sample=transform.lm$residuals)) +
 
 
 
-#  Step 3.
-# to get property sold in Q3 and Q4 2020.
+# 2.3, to get property sold in Q3 and Q4 2020.
 q3_2020_sold <- filter(data_2016_2020_clean, 
                        yrsold == "2020", quarter =="3" ) 
 
@@ -704,4 +703,11 @@ q3_mean = mean(condo_class_q3$price)
 q4_mean = mean(condo_class_q4$price)
 
 (q4_mean - q3_mean)/q3_mean
+
+
+# Step 3: Submit model and work.
+saveRDS(list(model=transform.lm, 
+             data=data_2016_2020_clean),
+        file="qingwei_zhang.RDS"
+        )
 
