@@ -603,12 +603,12 @@ transform.lm.summary <-
 
 transform.lm.summary
 
-RMSE_transform_v2_model <- sqrt(
+RMSE_model <- sqrt(
   mean(transform.lm.summary$residuals^2)
 )
 
 sprintf("Root Mean Square Error(RMSE) for Transformed V2 Model : %s", 
-        round(RMSE_transform_v2_model, digits = 4))
+        round(RMSE_model, digits = 4))
 
 #2.3.0.1 - Test IID assumptions
 #Kolmogorov-Smirnov test for normality
@@ -643,8 +643,6 @@ ggplot(data_2016_2020_clean, aes(sample=transform.lm$residuals)) +
   stat_qq_line() +
   labs(title = "QQ Plot of BC Model")
 
-
-
 # 2.3, to get property sold in Q3 and Q4 2020.
 q3_2020_sold <- filter(data_2016_2020_clean, 
                        yrsold == "2020", quarter =="3" ) 
@@ -654,15 +652,13 @@ q4_2020_sold <- filter(data_2016_2020_clean,
 
 
 # average sold price at Q4, USD 1070895.
-average_sold_price_q4 <- mean(q4_2020_sold$price)
+average_sold_price_q4 <- mean(q4_2020_sold$adjprice)
 
 #  average sold price at Q3, USD 957949.9
-average_sold_price_q3 <- mean(q3_2020_sold$price)
-
-
+average_sold_price_q3 <- mean(q3_2020_sold$adjprice)
 
 # average sold price all property types, quarter 4 over quarter 3.
-average_sold_price_change = (
+average_sold_price_change <- (
   average_sold_price_q4 - average_sold_price_q3)/average_sold_price_q3
 
 # 0.1179029
@@ -686,11 +682,11 @@ residential_class_price_q3 <- filter(q3_2020_sold, str_detect(bldclasssale, "^A"
 
 residential_class__price_q4 <- filter(q4_2020_sold, str_detect(bldclasssale, "^A"))
 
-q3_mean = mean(residential_class_price_q3$price)
+q3_mean <- mean(residential_class_price_q3$adjprice)
 
-q4_mean = mean(residential_class__price_q4$price)
+q4_mean <- mean(residential_class__price_q4$adjprice)
 
-(q4_mean - q3_mean)/q4_mean
+increase_rate <- (q4_mean - q3_mean)/q4_mean
 
 
 # get all types of condo class
@@ -698,11 +694,11 @@ condo_class_q3 <- filter(q3_2020_sold, str_detect(bldclasssale, "^R"))
 
 condo_class_q4 <- filter(q4_2020_sold, str_detect(bldclasssale, "^R"))
 
-q3_mean = mean(condo_class_q3$price)
+q3_mean <- mean(condo_class_q3$adjprice)
 
-q4_mean = mean(condo_class_q4$price)
+q4_mean <- mean(condo_class_q4$adjprice)
 
-(q4_mean - q3_mean)/q3_mean
+increase_rate <- (q4_mean - q3_mean)/q3_mean
 
 
 # Step 3: Submit model and work.
