@@ -1,5 +1,5 @@
-# title: Final Assignment Part 1
-# author: Qingwei Zhang"
+# Final Assignment Part 1
+# Qingwei Zhang"
 
 
 install.packages("dplyr")
@@ -17,7 +17,7 @@ library(LambertW)
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
-library(GGally) ##plot correlation
+library(GGally) 
 library(Amelia)
 library(Hmisc)
 library(lmtest)
@@ -30,20 +30,20 @@ setwd("C:/Users/QZHAN101/Downloads/play/UCHICAGO/MSCA_31007_ON01_Autumn_2022_Sta
 
 # Step 1: Import and prepare the data for analysis
 #1.1 Bring the data into R
-brooklyn_2016 <- read.csv('2016_brooklyn.csv')
-brooklyn_2017 <- read.csv('2017_brooklyn.csv')
-brooklyn_2018 <- read.csv('2018_brooklyn.csv')
-brooklyn_2019 <- read.csv('2019_brooklyn.csv')
-brooklyn_2020 <- read.csv('2020_brooklyn.csv')
+data_2016 <- read.csv('2016_brooklyn.csv')
+data_2017 <- read.csv('2017_brooklyn.csv')
+data_2018 <- read.csv('2018_brooklyn.csv')
+data_2019 <- read.csv('2019_brooklyn.csv')
+data_2020 <- read.csv('2020_brooklyn.csv')
 
-#removing first 'n' rows from csv files as those are description entries
-brooklyn_2016 <- tail(brooklyn_2016, -4)
-brooklyn_2017 <- tail(brooklyn_2017, -4)
-brooklyn_2018 <- tail(brooklyn_2018, -4)
-brooklyn_2019 <- tail(brooklyn_2019, -4)
-brooklyn_2020 <- tail(brooklyn_2020, -7)
+#removing first 'n' rows from csv files since they are irrelevant.
+data_2016 <- tail(data_2016, -4)
+data_2017 <- tail(data_2017, -4)
+data_2018 <- tail(data_2018, -4)
+data_2019 <- tail(data_2019, -4)
+data_2020 <- tail(data_2020, -7)
 
-#define column names for each dataframes
+#define column names for each data frames
 colnames <- c(
   "borough",
   "neighborhood",
@@ -70,37 +70,36 @@ colnames <- c(
 
 
 # define column names
-colnames(brooklyn_2016) <- colnames
-colnames(brooklyn_2017) <- colnames
-colnames(brooklyn_2018) <- colnames
-colnames(brooklyn_2019) <- colnames
-colnames(brooklyn_2020) <- colnames
+colnames(data_2016) <- colnames
+colnames(data_2017) <- colnames
+colnames(data_2018) <- colnames
+colnames(data_2019) <- colnames
+colnames(data_2020) <- colnames
 
 #define rows names for each dataframes
-rownames(brooklyn_2016) <- 1:nrow(brooklyn_2016)
-rownames(brooklyn_2017) <- 1:nrow(brooklyn_2017)
-rownames(brooklyn_2018) <- 1:nrow(brooklyn_2018)
-rownames(brooklyn_2019) <- 1:nrow(brooklyn_2019)
-rownames(brooklyn_2020) <- 1:nrow(brooklyn_2020)
+rownames(data_2016) <- 1:nrow(data_2016)
+rownames(data_2017) <- 1:nrow(data_2017)
+rownames(data_2018) <- 1:nrow(data_2018)
+rownames(data_2019) <- 1:nrow(data_2019)
+rownames(data_2020) <- 1:nrow(data_2020)
 
 
 #1.2 Join the data and make it usable for analysis
-#The resulting data set should have roughly 119,000 rows.
 
 #remove empty rows
-brooklyn_2016 <- brooklyn_2016[!apply(brooklyn_2016 == "", 1, all),]
-brooklyn_2017 <- brooklyn_2017[!apply(brooklyn_2017 == "", 1, all),]
-brooklyn_2018 <- brooklyn_2018[!apply(brooklyn_2018 == "", 1, all),]
-brooklyn_2019 <- brooklyn_2019[!apply(brooklyn_2019 == "", 1, all),]
-brooklyn_2020 <- brooklyn_2020[!apply(brooklyn_2020 == "", 1, all),]
+data_2016 <- data_2016[!apply(data_2016 == "", 1, all),]
+data_2017 <- data_2017[!apply(data_2017 == "", 1, all),]
+data_2018 <- data_2018[!apply(data_2018 == "", 1, all),]
+data_2019 <- data_2019[!apply(data_2019 == "", 1, all),]
+data_2020 <- data_2020[!apply(data_2020 == "", 1, all),]
 
 #since we removed blank rows from Brooklyn 2019 & 2020, we reduced 
 # from 119351 rows to 117151
-total_observations <- nrow(brooklyn_2016) + 
-  nrow(brooklyn_2017) + 
-  nrow(brooklyn_2018) + 
-  nrow(brooklyn_2019) +
-  nrow(brooklyn_2020)
+count_observations <- nrow(data_2016) + 
+  nrow(data_2017) + 
+  nrow(data_2018) + 
+  nrow(data_2019) +
+  nrow(data_2020)
 
 #define functions. 
 #This one is for trim white space.
@@ -149,13 +148,13 @@ func.df.ToDate <- function(df, colnames, format) {
 }
 
 #trim leading and trailing white spaces for columns
-brooklyn_2016 <- func.df.trim(brooklyn_2016, colnames)
-brooklyn_2017 <- func.df.trim(brooklyn_2017, colnames)
-brooklyn_2018 <- func.df.trim(brooklyn_2018, colnames)
-brooklyn_2019 <- func.df.trim(brooklyn_2019, colnames)
-brooklyn_2020 <- func.df.trim(brooklyn_2020, colnames)
+data_2016 <- func.df.trim(data_2016, colnames)
+data_2017 <- func.df.trim(data_2017, colnames)
+data_2018 <- func.df.trim(data_2018, colnames)
+data_2019 <- func.df.trim(data_2019, colnames)
+data_2020 <- func.df.trim(data_2020, colnames)
 
-#replace column value '-' with empty
+#replace column value '-' with empty.
 columns_with_hyphen = c(
   'borough',
   'resunits',
@@ -166,11 +165,11 @@ columns_with_hyphen = c(
   'taxclasssale'
   )
 
-brooklyn_2016 <- func.df.replace(brooklyn_2016, columns_with_hyphen, '-', '')
-brooklyn_2017 <- func.df.replace(brooklyn_2017, columns_with_hyphen, '-', '')
-brooklyn_2018 <- func.df.replace(brooklyn_2018, columns_with_hyphen, '-', '')
-brooklyn_2019 <- func.df.replace(brooklyn_2019, columns_with_hyphen, '-', '')
-brooklyn_2020 <- func.df.replace(brooklyn_2020, columns_with_hyphen, '-', '')
+data_2016 <- func.df.replace(data_2016, columns_with_hyphen, '-', '')
+data_2017 <- func.df.replace(data_2017, columns_with_hyphen, '-', '')
+data_2018 <- func.df.replace(data_2018, columns_with_hyphen, '-', '')
+data_2019 <- func.df.replace(data_2019, columns_with_hyphen, '-', '')
+data_2020 <- func.df.replace(data_2020, columns_with_hyphen, '-', '')
 
 #change data types to Integer for following columns
 columns_To_Int <- list(
@@ -194,134 +193,128 @@ columns_To_Num <- list(
 )
 
 # start changing data type for all five data sets, 2016 to 2020.
-brooklyn_2016 <- func.df.ToInt(brooklyn_2016,columns_To_Int)
-brooklyn_2016 <- func.df.ToNum(brooklyn_2016,columns_To_Num)
-brooklyn_2016 <- func.df.ToDate(brooklyn_2016,list('date'),format="%m/%d/%Y")
-brooklyn_2016 <- brooklyn_2016 %>% filter(!is.na(price))
+data_2016 <- func.df.ToInt(data_2016,columns_To_Int)
+data_2016 <- func.df.ToNum(data_2016,columns_To_Num)
+data_2016 <- func.df.ToDate(data_2016,list('date'),format="%m/%d/%Y")
+data_2016 <- data_2016 %>% filter(!is.na(price))
 
-brooklyn_2017 <- func.df.ToInt(brooklyn_2017,columns_To_Int)
-brooklyn_2017 <- func.df.ToNum(brooklyn_2017,columns_To_Num)
-brooklyn_2017 <- func.df.ToDate(brooklyn_2017,list('date'),format="%m/%d/%y")
-brooklyn_2017 <- brooklyn_2017 %>% filter(!is.na(price))
+data_2017 <- func.df.ToInt(data_2017,columns_To_Int)
+data_2017 <- func.df.ToNum(data_2017,columns_To_Num)
+data_2017 <- func.df.ToDate(data_2017,list('date'),format="%m/%d/%y")
+data_2017 <- data_2017 %>% filter(!is.na(price))
 
-brooklyn_2018 <- func.df.ToInt(brooklyn_2018,columns_To_Int)
-brooklyn_2018 <- func.df.ToNum(brooklyn_2018,columns_To_Num)
-brooklyn_2018 <- func.df.ToDate(brooklyn_2018,list('date'),format="%m/%d/%y")
-brooklyn_2018 <- brooklyn_2018 %>% filter(!is.na(price))
+data_2018 <- func.df.ToInt(data_2018,columns_To_Int)
+data_2018 <- func.df.ToNum(data_2018,columns_To_Num)
+data_2018 <- func.df.ToDate(data_2018,list('date'),format="%m/%d/%y")
+data_2018 <- data_2018 %>% filter(!is.na(price))
 
-brooklyn_2019 <- func.df.ToInt(brooklyn_2019,columns_To_Int)
-brooklyn_2019 <- func.df.ToNum(brooklyn_2019,columns_To_Num)
-brooklyn_2019 <- func.df.ToDate(brooklyn_2019,list('date'),format="%m/%d/%y")
-brooklyn_2019 <- brooklyn_2019 %>% filter(!is.na(price))
+data_2019 <- func.df.ToInt(data_2019,columns_To_Int)
+data_2019 <- func.df.ToNum(data_2019,columns_To_Num)
+data_2019 <- func.df.ToDate(data_2019,list('date'),format="%m/%d/%y")
+data_2019 <- data_2019 %>% filter(!is.na(price))
 
-brooklyn_2020 <- func.df.ToInt(brooklyn_2020,columns_To_Int)
-brooklyn_2020 <- func.df.ToNum(brooklyn_2020,columns_To_Num)
-brooklyn_2020 <- func.df.ToDate(brooklyn_2020,list('date'),format="%m/%d/%y")
-brooklyn_2020 <- brooklyn_2020 %>% filter(!is.na(price))
+data_2020 <- func.df.ToInt(data_2020,columns_To_Int)
+data_2020 <- func.df.ToNum(data_2020,columns_To_Num)
+data_2020 <- func.df.ToDate(data_2020,list('date'),format="%m/%d/%y")
+data_2020 <- data_2020 %>% filter(!is.na(price))
 
 # to get the total observation number of rows.
-total_observations_after_cleanup <- nrow(brooklyn_2016) + 
-  nrow(brooklyn_2017) + 
-  nrow(brooklyn_2018) + 
-  nrow(brooklyn_2019) +
-  nrow(brooklyn_2020)
+count_observation_after_processing <- nrow(data_2016) + 
+  nrow(data_2017) + 
+  nrow(data_2018) + 
+  nrow(data_2019) +
+  nrow(data_2020)
 
 #merge the data frames
-brooklyn_2016_2020_list <- list(
-  brooklyn_2016, 
-  brooklyn_2017, 
-  brooklyn_2018, 
-  brooklyn_2019, 
-  brooklyn_2020
+data_2016_2020_list <- list(
+  data_2016, 
+  data_2017, 
+  data_2018, 
+  data_2019, 
+  data_2020
 )
 
-brooklyn_2016_2020 <- brooklyn_2016_2020_list %>% reduce(full_join)
-remove(brooklyn_2016_2020_list)
+data_2016_2020 <- data_2016_2020_list %>% reduce(full_join)
+remove(data_2016_2020_list)
 
 
 #1.3 Filter the data and make transformations specific to this analysis 
-
-#filter observations considering purchases of single-family residences
-# and single-unit apartments or condos
-#Restrict the data to purchases where the building class at the time
-# of sale starts with ‘A’(ONE FAMILY DWELLINGS) or ‘R’(CONDOMINIUMS).
-brooklyn_2016_2020_final <- brooklyn_2016_2020 %>% 
+data_2016_2020_clean <- data_2016_2020 %>% 
   filter(str_detect(bldclasssale, "^A") 
          | str_detect(bldclasssale, "^R"))
 
 #the number of total units and the number of residential units are both 1
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+data_2016_2020_clean <- data_2016_2020_clean %>% 
   filter(resunits == 1 & totunits == 1)
 
 #additionally restrict the data to observation where gross square
 # footage is more than 0
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+data_2016_2020_clean <- data_2016_2020_clean %>% 
   filter(grosssqft > 0 & !is.na(grosssqft))
 
 #additionally restrict the data to observation where sale price is 
 #non-missing
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+data_2016_2020_clean <- data_2016_2020_clean %>% 
   filter(!is.na(price))
 
 #additionally restrict the data to observation where Year Built is 
 #more than 0
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+data_2016_2020_clean <- data_2016_2020_clean %>% 
   filter(yrbuilt > 0)
 
 #additionally restrict the data to observation where price is 
 #less than 100 million. Anything outside of that, I would consider 
-#those as outliers
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
-  filter(price <= 10000000)
+#those as outliers.
+outlier_threhold=10000000
+
+data_2016_2020_clean <- data_2016_2020_clean %>% 
+  filter(price <= outlier_threhold)
 
 #additionally restrict the data to observation where gross sqft is 
 #less than 20k. Anything outside of that, I would consider those as outliers
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
-  filter(grosssqft < 20000)
+grosssqft_threhold=20000
+
+data_2016_2020_clean <- data_2016_2020_clean %>% 
+  filter(grosssqft < grosssqft_threhold)
 
 
 # Step 2: EDA and feature engineering 
 
 #2.1 Exploratory data analysis 
+
 #2.1.1.1 - Statistics summary
-dim(brooklyn_2016_2020_final)
-summary(brooklyn_2016_2020_final)
+dim(data_2016_2020_clean)
+summary(data_2016_2020_clean)
 
 
 #2.1.1.2 - Check for any NA’s in the dataframe
 missmap(
-  brooklyn_2016_2020_final,
+  data_2016_2020_clean,
   col=c('yellow','black'),
   y.at=1,
   y.labels='',legend=TRUE
 )
-colSums(is.na(brooklyn_2016_2020_final))
+
+colSums(is.na(data_2016_2020_clean))
 
 
 #2.1.1.3 - Data Cleansing — Handle missing data
-brooklyn_2016_2020_final[["taxclasscurr"]][
-  str_detect(brooklyn_2016_2020_final[["bldclasssale"]], "^A") 
-  & is.na(brooklyn_2016_2020_final[["taxclasscurr"]])] <- 1
+data_2016_2020_clean[["taxclasscurr"]][
+  str_detect(data_2016_2020_clean[["bldclasssale"]], "^A") 
+  & is.na(data_2016_2020_clean[["taxclasscurr"]])] <- 1
 
-brooklyn_2016_2020_final[["taxclasscurr"]][
-  str_detect(brooklyn_2016_2020_final[["bldclasssale"]], "^R") 
-  & is.na(brooklyn_2016_2020_final[["taxclasscurr"]])] <- 2
+data_2016_2020_clean[["taxclasscurr"]][
+  str_detect(data_2016_2020_clean[["bldclasssale"]], "^R") 
+  & is.na(data_2016_2020_clean[["taxclasscurr"]])] <- 2
 
-brooklyn_2016_2020_final[["comunits"]][
-  is.na(brooklyn_2016_2020_final[["comunits"]])] <- 0
+data_2016_2020_clean[["comunits"]][
+  is.na(data_2016_2020_clean[["comunits"]])] <- 0
+
+# make sure no columns has NA any more.
+colSums(is.na(data_2016_2020_clean))
 
 
 #2.1.1.4 - Correlations
-#A positive correlation indicates the extent to which those variables
-# increase or decrease in parallel; 
-#a negative correlation indicates the extent to which one variable 
-#increases as the other decreases.
-ggcorr(
-  brooklyn_2016_2020_final, 
-  label = T, hjust = 1, 
-  legend.position="top", 
-  layout.exp = 1
-)
 
 #The correlation between each independent variable with the target
 # variable must not be weak. 
@@ -334,70 +327,78 @@ ggcorr(
 #it can cause problems when you fit the model and interpret the results.
 
 #By looking at the correlation coefficient of the independent 
-#variables 'taxclasscurr', 'taxclasssale'
-#'landsqft', 'lot' with the target variable 'price' 
-#'(0.1, 0.1, 0.1, 0.1 respectively) are weak correlations, 
-#'therefore we can exclude these two independent variable from our model.
+#variables 'taxclasscurr', 'taxclasssale', 'landsqft', 'lot' 
+#with the target variable 'price' are weak correlations, 
+#(0.1, 0.1, 0.1, 0.1 respectively)
+#'therefore we can exclude these four independent variable from our model.
+ggcorr(
+  data_2016_2020_clean, 
+  label = T, 
+  hjust = 1, 
+  legend.position="top", 
+  layout.exp = 2
+)
 
 
 #2.1.1.5 - visualizing the distribution of the target variable 'price'
-brooklyn_2016_2020_final %>% 
+# and draw kernel density estimate.
+data_2016_2020_clean %>% 
   ggplot(aes(price)) +
-  stat_density() + 
+  geom_density() + 
   theme_bw()
 
 #2.1.3.1 - Additionally restrict the data to observation where 
 #price is greater than 0
-brooklyn_2016_2020_final <- 
-  brooklyn_2016_2020_final %>% filter(price > 0 & !is.na(price))
+data_2016_2020_clean <- 
+  data_2016_2020_clean %>% filter(price > 0 & !is.na(price))
 
 #2.1.3.2 - Additionally restrict the data to observation where 
 #zip is greater than 0
-brooklyn_2016_2020_final <- 
-  brooklyn_2016_2020_final %>% filter(zip > 0)
+data_2016_2020_clean <- 
+  data_2016_2020_clean %>% filter(zip > 0)
 
 
 #2.1.3.3 - visualizing the distribution of the target variable 'price'
-brooklyn_2016_2020_final %>% 
+data_2016_2020_clean %>% 
   ggplot(aes(price)) +
-  stat_density() + 
+  geom_density() + 
   theme_bw()
 
 #2.1.3.4 - Create a histogram of housing prices
-ggplot(data=brooklyn_2016_2020_final) + 
+ggplot(data=data_2016_2020_clean) + 
   geom_histogram(mapping = aes(price))
 
-ggplot(data=brooklyn_2016_2020_final) +                         
+ggplot(data=data_2016_2020_clean) +                         
   geom_histogram(mapping = aes(price/100000), 
                  breaks=seq(0, 7, by = 1), col="red", fill="lightblue") + 
   geom_density(mapping = aes(x=price/100000, y = (..count..)))  +   
-  labs(title="Housing Prices in Brooklyn, NY (in $100,000)", 
+  labs(title="Housing Prices in $100,000", 
        x="Sale Price of Individual Homes/Condos")   
 
-ggplot(data=brooklyn_2016_2020_final) + 
+ggplot(data=data_2016_2020_clean) + 
   geom_point(mapping= aes(x=grosssqft, y=price))
 
-ggplot(data=brooklyn_2016_2020_final) + 
+ggplot(data=data_2016_2020_clean) + 
   geom_point(mapping= aes(x=log(grosssqft), y=price))
 
-ggplot(data=brooklyn_2016_2020_final) + 
+ggplot(data=data_2016_2020_clean) + 
   geom_point(mapping= aes(x=yrbuilt, y=price))
 
-ggplot(data=brooklyn_2016_2020_final) + 
+ggplot(data=data_2016_2020_clean) + 
   geom_point(mapping= aes(x=price, y=bldclasssale))
 
-ggplot(data=brooklyn_2016_2020_final) + 
+ggplot(data=data_2016_2020_clean) + 
   geom_point(mapping= aes(x=price, y=zip))
 
-ggplot(data=brooklyn_2016_2020_final) + 
+ggplot(data=data_2016_2020_clean) + 
   geom_point(mapping= aes(x=price, y=block))
 
-ggplot(data=brooklyn_2016_2020_final) + 
+ggplot(data=data_2016_2020_clean) + 
   geom_point(mapping= aes(x=price, y=neighborhood))
 
 
 #2.1.3.5 - effect of the predictor variables on target variable 'price'
-brooklyn_2016_2020_final %>%
+data_2016_2020_clean %>%
   dplyr::select(c(
     price,
     zip,
@@ -415,40 +416,44 @@ brooklyn_2016_2020_final %>%
   stat_smooth(aes(colour = "black")) +
   facet_wrap(~variable, scales = "free", ncol = 2) +
   labs(x = "Variable Value", y = "Price ($1000s)") +
-  theme_minimal()
+  theme_gray()
 
 
 #2.2 Pre-modeling and feature engineering
 
 #2.2.1.1 - find the average price of each neighborhood and assign that
-# price to price having 0 for those matching neighborhood
-unique_neighborhoods <- as.list(unique(brooklyn_2016_2020_final$neighborhood))
+# price to price having 0 for those matching neighborhood. We first
+# need to know what are the unique_neighborhoods and unique_neighborhoods.
+unique_neighborhoods <- as.list(unique(data_2016_2020_clean$neighborhood))
 
-unique_zips <- as.list(unique(brooklyn_2016_2020_final$zip))
+unique_zips <- as.list(unique(data_2016_2020_clean$zip))
 
 #2.2.1.2 - Remove duplicates based on columns 
 #(neighborhood,bldclasscat,block,zip,resunits,totunits,landsqft,
 #grosssqft,yrbuilt,bldclasssale,price)
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final[
-  !duplicated(brooklyn_2016_2020_final, by=c('neighborhood',
-       'bldclasscat',
-       'block',
-       'zip',
-       'resunits',
-       'totunits',
-       'landsqft',
-       'grosssqft',
-       'yrbuilt',
-       'bldclasssale',
-       'price'
-       )
-  ), ]
+
+columns_with_duplicates <- c('neighborhood',
+  'bldclasscat',
+  'block',
+  'zip',
+  'resunits',
+  'totunits',
+  'landsqft',
+  'grosssqft',
+  'yrbuilt',
+  'bldclasssale',
+  'price'
+)
+
+data_2016_2020_clean <- data_2016_2020_clean[
+  !duplicated(
+    data_2016_2020_clean, by=columns_with_duplicates), ]
 
 
 #2.2.1.3 - find duplicate rows with same values for column 
 #(neighborhood,bldclasscat,block,zip,resunits,totunits,landsqft,
 #grosssqft,yrbuilt,bldclasssale)
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+data_2016_2020_clean <- data_2016_2020_clean %>% 
   group_by(
     neighborhood,
     address,
@@ -467,23 +472,28 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
     TRUE  ~ 0
   ))
 
-brooklyn_2016_2020_final <- func.df.ToInt(
-  brooklyn_2016_2020_final,list('duplicate_row')
+data_2016_2020_clean <- func.df.ToInt(
+  data_2016_2020_clean,list('duplicate_row')
 )
 
 
 #2.2.1.4 - find the average price of each neighborhood and 
-#corresponding zip and assign that average price to rows 
-#that has the price between 1 and 10000 for those matching 
-#neighborhood and zip
+#corresponding zip. Some houses are sold with less than 3000 USD,
+# we assign the average price from their neighborhood and zip to 
+# those price-unreasonable houses with those matching neighborhood and zip.
+# We create a function to do this.
 func.df.adjPrice <- function(df, neighborhoods, zips) {
   df$adjprice = df$price
   colname_price = 'adjprice'
   colname_neighborhood = 'neighborhood'
   colname_zip = 'zip'
+  threshold_price=3000
   
   group_by_neighbour_zip <- df %>% 
-    filter(is.element(neighborhood, unique_neighborhoods) & price > 3000) %>%  
+    filter(is.element(
+      neighborhood, 
+      unique_neighborhoods) & 
+        price > threshold_price) %>%  
     group_by(neighborhood, zip) %>% 
     summarise(mean_price=floor(mean(price)), .groups = 'drop') %>%
     as.data.frame()
@@ -495,7 +505,7 @@ func.df.adjPrice <- function(df, neighborhoods, zips) {
     col_mean_price_val <- row[,3]
     
     df[[colname_price]][df[[colname_price]] > 0 & 
-                        df[[colname_price]] <= 3000 & 
+                        df[[colname_price]] <= threshold_price & 
                         df[[colname_neighborhood]] == col_neighborhood_val & 
                         df[[colname_zip]] == col_zip_val] <- col_mean_price_val
   }
@@ -503,50 +513,33 @@ func.df.adjPrice <- function(df, neighborhoods, zips) {
   return(df)
 }
 
-brooklyn_2016_2020_final <- func.df.adjPrice(
-  brooklyn_2016_2020_final, unique_neighborhoods, unique_zips
+# run the function to fill the adjusted prices to all rows.
+data_2016_2020_clean <- func.df.adjPrice(
+  data_2016_2020_clean, 
+  unique_neighborhoods, 
+  unique_zips
 )
 
-#2.2.1.5 - Set landsqft = grosssqft if it's 0
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>% 
+#2.2.1.5 - Set landsqft equals grosssqft if landsqft less than 0
+data_2016_2020_clean <- data_2016_2020_clean %>% 
   mutate(adjlandsqft = case_when(
     landsqft <= 0  ~ grosssqft,
     TRUE  ~ landsqft
   ))
 
-brooklyn_2016_2020_final <- 
-  func.df.ToNum(brooklyn_2016_2020_final,list('adjlandsqft'))
+data_2016_2020_clean <- 
+  func.df.ToNum(data_2016_2020_clean,list('adjlandsqft'))
 
 #2.2.2.1 - extract year from sale date
-brooklyn_2016_2020_final$yrsold <- 
-  format(brooklyn_2016_2020_final$date,"%Y")
+data_2016_2020_clean$yrsold <- 
+  format(data_2016_2020_clean$date,"%Y")
 
-brooklyn_2016_2020_final <- 
-  func.df.ToInt(brooklyn_2016_2020_final,list('yrsold'))
-
-
-#2.2.3.1 - adding decade as new column. Also as the year build 
-#increases the house price decreases
-brooklyn_2016_2020_final$decade <- 
-  10*floor(brooklyn_2016_2020_final$yrbuilt/10)
-
-brooklyn_2016_2020_final$decade[brooklyn_2016_2020_final$decade<1970] <- 1970
-
-
-#2.2.3.2 - adding yrbuiltbycategory by dividing the year built
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
-  mutate(yrbuiltbycategory = case_when(
-    yrbuilt <= 1900  ~ 0,
-    yrbuilt > 1900 & yrbuilt <= 1970  ~ 1,
-    yrbuilt > 1970 & yrbuilt <= 2000  ~ 2,
-    yrbuilt > 2000  ~ 3
-  ))
-
-brooklyn_2016_2020_final <- 
-  func.df.ToInt(brooklyn_2016_2020_final,list('yrbuiltbycategory'))
+#2.2.3.2 - convert the column to integer type.
+data_2016_2020_clean <- 
+  func.df.ToInt(data_2016_2020_clean,list('yrsold'))
 
 #2.2.3.3 - adding quarter by extracting month from date
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
+data_2016_2020_clean <- data_2016_2020_clean %>%
   mutate(quarter = case_when(
     is.element(format(date,"%m"), c("01", "02", "03"))  ~ 1,
     is.element(format(date,"%m"), c("04", "05", "06"))  ~ 2,
@@ -554,56 +547,110 @@ brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
     is.element(format(date,"%m"), c("10", "11", "12"))  ~ 4
   ))
 
-brooklyn_2016_2020_final <- 
-  func.df.ToInt(brooklyn_2016_2020_final,list('quarter'))
-
+#2.2.3.4 - convert the column to integer type.
+data_2016_2020_clean <- 
+  func.df.ToInt(data_2016_2020_clean,list('quarter'))
 
 #2.2.4.1 - group all "A5" "A1" "A9" "A4" "A3" "A2" "A0" "A7" "A6" to "A"
 #2.2.4.2 - group all "R3" "R2" "R4" "R1" "R6" "RR" to "R"
-brooklyn_2016_2020_final <- brooklyn_2016_2020_final %>%
+data_2016_2020_clean <- data_2016_2020_clean %>%
   mutate(bldclasssalecategory = case_when(
     str_detect(bldclasssale, "^A")  ~ "0",
     str_detect(bldclasssale, "^R")  ~ "1"
   ))
-brooklyn_2016_2020_final <- func.df.ToInt(
-  brooklyn_2016_2020_final,list('bldclasssalecategory')
+
+# convert the column to int.
+data_2016_2020_clean <- func.df.ToInt(
+  data_2016_2020_clean,list('bldclasssalecategory')
 )
 
 
 #2.2.5.1 - log transformations of predictors
-brooklyn_2016_2020_final$logage <- 
-  log(brooklyn_2016_2020_final$yrsold-brooklyn_2016_2020_final$yrbuilt+0.1)
+data_2016_2020_clean$log_house_age <- 
+  log(data_2016_2020_clean$yrsold - 
+        data_2016_2020_clean$yrbuilt +
+        0.1
+      )
 
-#2.2.5.4 - Test IID assumptions
+#2.2.6.1 - Let's identify significance level from interaction between variables
+summary(lm(formula = adjprice~
+             (factor(bldclasssalecategory)+
+                factor(zip)+
+                grosssqft+
+                adjlandsqft+  
+                block+
+                lot+
+                log_house_age+
+                yrbuilt+
+                borough+
+                factor(bldclasscat)+
+                factor(taxclasssale))^2,
+           data_2016_2020_clean))
+
 
 #2.3 - Reach a stopping point 
 #New version of model by adding interaction terms 
-brooklyn_2016_2020_final.lm.transform.v2 <- lm(formula = adjprice~
-                                              factor(bldclasssalecategory)*
-                                                grosssqft+
-                                              factor(zip)+
-                                              logage,
-                                            brooklyn_2016_2020_final)
+transform.lm <- lm(formula = adjprice~factor(bldclasssalecategory)*
+  grosssqft+
+  factor(zip)+
+  log_house_age,
+  
+  data_2016_2020_clean
+)
 
-brooklyn_2016_2020_final.lm.transform.v2.summary <- 
-  summary(brooklyn_2016_2020_final.lm.transform.v2)
+transform.lm.summary <- 
+  summary(transform.lm)
 
-brooklyn_2016_2020_final.lm.transform.v2.summary
+transform.lm.summary
 
 RMSE_transform_v2_model <- sqrt(
-  mean(brooklyn_2016_2020_final.lm.transform.v2.summary$residuals^2)
+  mean(transform.lm.summary$residuals^2)
 )
 
 sprintf("Root Mean Square Error(RMSE) for Transformed V2 Model : %s", 
         round(RMSE_transform_v2_model, digits = 4))
 
+#2.3.0.1 - Test IID assumptions
+#Kolmogorov-Smirnov test for normality
+hist(transform.lm$residuals)
+ks.test(transform.lm$residuals/summary(transform.lm)$sigma, pnorm)
+
+#Breusch-Pagan test for normality heteroscedasticity
+bptest(transform.lm)
+
+#If the residuals become more spread out at higher values in the plot, 
+#this is a tell-tale sign that heteroscedasticity is present.
+plot(fitted(transform.lm), 
+     resid(transform.lm), 
+     col = "dodgerblue",
+     pch = 20, cex = 1.5, 
+     xlab = "Fitted", 
+     ylab = "Residuals")
+
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+
+#2.2.5.5 - a scale-location plot
+ggplot(transform.lm, 
+       aes(x=.fitted, y=sqrt(abs(.stdresid)))) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  geom_smooth() +
+  ggtitle("Scale-Location plot : Standardized Residual vs Fitted values")
+
+#2.2.5.6 - normal QQ plot
+ggplot(data_2016_2020_clean, aes(sample=transform.lm$residuals)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = "QQ Plot of BC Model")
+
+
 
 #  Step 3.
 # to get property sold in Q3 and Q4 2020.
-q3_2020_sold <- filter(brooklyn_2016_2020_final, 
+q3_2020_sold <- filter(data_2016_2020_clean, 
                        yrsold == "2020", quarter =="3" ) 
 
-q4_2020_sold <- filter(brooklyn_2016_2020_final, 
+q4_2020_sold <- filter(data_2016_2020_clean, 
                        yrsold == "2020", quarter =="4" )  
 
 
