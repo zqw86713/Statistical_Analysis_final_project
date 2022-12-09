@@ -654,14 +654,17 @@ q4_2020_sold <- filter(data_2016_2020_clean,
 # average sold price at Q4, USD 1070895.
 average_sold_price_q4 <- mean(q4_2020_sold$adjprice)
 
+average_sold_price_q4
+
 #  average sold price at Q3, USD 957949.9
 average_sold_price_q3 <- mean(q3_2020_sold$adjprice)
+average_sold_price_q3
+
 
 # average sold price all property types, quarter 4 over quarter 3.
 average_sold_price_change <- (
   average_sold_price_q4 - average_sold_price_q3)/average_sold_price_q3
 
-# 0.1179029
 average_sold_price_change
 
 
@@ -680,19 +683,39 @@ properties_sold_increase_rate
 # get all types of residential class
 residential_class_price_q3 <- filter(q3_2020_sold, str_detect(bldclasssale, "^A"))
 
-residential_class__price_q4 <- filter(q4_2020_sold, str_detect(bldclasssale, "^A"))
+residential_class_price_q4 <- filter(q4_2020_sold, str_detect(bldclasssale, "^A"))
+
+# Number of sold residential properties
+count_res_q3 <- nrow(residential_class_price_q3)
+
+count_res_q4 <- nrow(residential_class_price_q4)
+
+rate<-(count_res_q4-count_res_q3)/count_res_q3
+
 
 q3_mean <- mean(residential_class_price_q3$adjprice)
+q3_mean
 
-q4_mean <- mean(residential_class__price_q4$adjprice)
+q4_mean <- mean(residential_class_price_q4$adjprice)
+q4_mean
 
-increase_rate <- (q4_mean - q3_mean)/q4_mean
+increase_rate <- (q4_mean - q3_mean)/q3_mean
+increase_rate
 
 
 # get all types of condo class
 condo_class_q3 <- filter(q3_2020_sold, str_detect(bldclasssale, "^R"))
 
 condo_class_q4 <- filter(q4_2020_sold, str_detect(bldclasssale, "^R"))
+
+
+# Number of sold residential properties
+count_condo_q3 <- nrow(condo_class_q3)
+
+count_condo_q4 <- nrow(condo_class_q4)
+
+rate <- (count_condo_q4-count_condo_q3)/count_condo_q3
+
 
 q3_mean <- mean(condo_class_q3$adjprice)
 
